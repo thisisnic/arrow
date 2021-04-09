@@ -35,8 +35,16 @@
 #' @export
 #' @include arrow-package.R
 #' @include enums.R
+# The Buffer class inherits from the ArrowObject class
 Buffer <- R6Class("Buffer", inherit = ArrowObject,
+                  
+                  
+  # These methods mean that you can call Buffer$ZeroPadding(), Buffer$data(), and Buffer$Equals()
   public = list(
+    # Buffer__ZeroPadding() can be found in arrowExports.R
+    # It is a call to the C++ function _arrow_Buffer__ZeroPadding
+    # This can be found in arrowExports.cpp and has the extern keyword mearning it has external linkage
+    # It is also in /r/src/buffer.cpp - I think this is the actual one and the arrowExports.cpp thing is to do with aliases?
     ZeroPadding = function() Buffer__ZeroPadding(self),
     data = function() Buffer__data(self),
     Equals = function(other, ...) {
@@ -44,13 +52,16 @@ Buffer <- R6Class("Buffer", inherit = ArrowObject,
     }
   ),
 
+  # These active bindings mean that you can treat these functions like properties
+  # Buffer$is_mutable actually calls a function but needs no parentheses after it
   active = list(
     is_mutable = function() Buffer__is_mutable(self),
     size = function() Buffer__size(self),
     capacity = function() Buffer__capacity(self)
   )
 )
-
+# Add a create method to buffer
+# Why is this not a public method? Or defined within an initialize function?
 Buffer$create <- function(x) {
   if (inherits(x, "Buffer")) {
     x
