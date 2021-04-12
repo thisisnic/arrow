@@ -115,6 +115,8 @@ cast_array_expression <- function(x, to_type, safe = TRUE, ...) {
   arg
 }
 
+# all of the Arrow unary functions that we have maps between the ones we'd
+# use in dplyr - dplyr does all the translating from array to table
 .unary_function_map <- list(
   "!" = "invert",
   "as.factor" = "dictionary_encode",
