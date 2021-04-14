@@ -351,3 +351,71 @@ test_that("value_counts", {
   expect_identical(as.data.frame(value_counts(a)), result_df)
   expect_identical(as.vector(value_counts(a)$counts), result_df$counts)
 })
+
+test_that("any.Array", {
+  
+  data <- c(1:10, NA, NA)
+  array_data <- Array$create(data)
+  
+  expect_equal(as.vector(any(array_data > 5)), any(data > 5))
+  expect_equal(as.vector(any(array_data < 1)), any(data < 1))
+  expect_equal(as.vector(any(array_data < 1, na.rm = TRUE)), any(data < 1, na.rm = TRUE))
+  
+  data_logical <- c(TRUE, FALSE, TRUE, NA, FALSE)
+  array_data_logical <- Array$create(data_logical)
+  
+  expect_equal(as.vector(any(array_data_logical)), any(data_logical))
+  expect_equal(as.vector(any(array_data_logical, na.rm =TRUE)), any(data_logical, na.rm =TRUE))
+})
+
+test_that("all.Array", {
+  data <- c(1:10, NA, NA)
+  array_data <- Array$create(data)
+  
+  expect_equal(as.vector(all(array_data > 5)), all(data > 5))
+  expect_equal(as.vector(all(array_data < 11)), all(data < 11))
+  expect_equal(as.vector(all(array_data < 11, na.rm = TRUE)), all(data < 11, na.rm = TRUE))
+  
+  data_logical <- c(TRUE, FALSE, TRUE, NA, FALSE)
+  array_data_logical <- Array$create(data_logical)
+  
+  expect_equal(as.vector(all(array_data_logical)), all(data_logical))
+  expect_equal(as.vector(all(array_data_logical, na.rm =TRUE)), all(data_logical, na.rm =TRUE))
+})
+
+test_that("any.ChunkedArray", {
+  data <- list(as.numeric(1:10), c(NA, 2:10), c(1:3, NA, 5L))
+  x <- chunked_array(!!!data)
+  
+  chunk <- x$chunks
+  expect_equal(as.vector(any(chunk[[1]] > 5)), any(data[[1]] > 5))
+  expect_equal(as.vector(any(chunk[[2]] < 1)), any(data[[2]] < 1))
+  expect_equal(as.vector(any(chunk[[2]] < 1, na.rm =TRUE)), any(data[[2]] < 1, na.rm = TRUE))
+  
+  data_logical <- list(c(TRUE, FALSE, TRUE), c(NA, TRUE))
+  x2 <- chunked_array(!!!data_logical)
+  chunks2 <- x2$chunks
+  expect_equal(as.vector(any(chunks2[[1]])), any(data_logical[[1]]))
+  expect_equal(as.vector(any(chunks2[[2]])), any(data_logical[[2]]))
+  expect_equal(as.vector(any(chunks2[[2]], na.rm =TRUE)), any(data_logical[[2]], na.rm =TRUE))
+  
+})
+
+test_that("all.ChunkedArray", {
+  data <- list(as.numeric(1:10), c(NA, 2:10), c(1:3, NA, 5L))
+  x <- chunked_array(!!!data)
+  
+  chunk <- x$chunks
+  expect_equal(as.vector(all(chunk[[1]] > 5)), all(data[[1]] > 5))
+  expect_equal(as.vector(all(chunk[[2]] < 11)), all(data[[2]] < 11))
+  expect_equal(as.vector(all(chunk[[2]] < 1, na.rm =TRUE)), all(data[[2]] < 1, na.rm = TRUE))
+  
+  data_logical <- list(c(TRUE, FALSE, TRUE), c(NA, TRUE))
+  
+  x2 <- chunked_array(!!!data_logical)
+  chunks2 <- x2$chunks
+  expect_equal(as.vector(all(chunks2[[1]])), all(data_logical[[1]]))
+  expect_equal(as.vector(all(chunks2[[2]])), all(data_logical[[2]]))
+  expect_equal(as.vector(all(chunks2[[2]], na.rm =TRUE)), all(data_logical[[2]], na.rm =TRUE))
+  
+})
