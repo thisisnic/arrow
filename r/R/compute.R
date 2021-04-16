@@ -192,7 +192,7 @@ any.ArrowDatum <- function(..., na.rm = FALSE){
   a <- collect_arrays_from_dots(list(...))
   result <- call_function("any", a)
 
-  if(!as.vector(result) && a$null_count > 0 && !na.rm){
+  if(!na.rm && a$null_count > 0 && !as.vector(result)){
     Scalar$create(NA)
   } else {
     result
@@ -205,7 +205,7 @@ all.ArrowDatum <- function(..., na.rm = FALSE){
   a <- collect_arrays_from_dots(list(...))
   result <- call_function("all", a)
   
-  if(as.vector(result) && a$null_count > 0 && !na.rm){
+  if(!na.rm &&  a$null_count > 0 && as.vector(result)){
     Scalar$create(NA)
   } else {
     result
