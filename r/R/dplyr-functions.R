@@ -77,7 +77,7 @@ nse_funcs$is <- function(object, class2) {
   } else if (inherits(class2, "DataType")) {
     object$type() == as_type(class2)
   } else {
-    stop("Second argument to is() is not a string or DataType", call. = FALSE)
+    stop(paste0("Second argument to is() must have class 'character' or 'DataType', not '", class(class2)[[1]], "'"), call. = FALSE)
   }
 }
 

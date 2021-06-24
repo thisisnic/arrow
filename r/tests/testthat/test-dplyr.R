@@ -688,6 +688,13 @@ test_that("type checks with is() giving R types", {
       lst = list(c("a", "b"), c("d", "e"), c("f", "g"))
     )
   )
+  
+  expect_error(
+    nse_funcs$is(tbl, c(1,2,3)),
+    "Second argument to is() must have class 'character' or 'DataType', not 'numeric'",
+    fixed = TRUE
+  )
+  
 })
 
 test_that("type checks with is.*()", {
