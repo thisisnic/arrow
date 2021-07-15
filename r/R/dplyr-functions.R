@@ -559,3 +559,10 @@ nse_funcs$wday <- function(x, label = FALSE, abbr = TRUE, week_start = getOption
   Expression$create("day_of_week", x, options = list(one_based_numbering = TRUE, week_start = week_start))
 
 }
+
+nse_funcs$case_when <- function(...){
+  build_expr(
+    "case_when",
+    ...
+  ) 
+}
