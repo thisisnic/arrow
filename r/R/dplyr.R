@@ -247,6 +247,7 @@ source_data <- function(x) {
   }
 }
 
+# i.e. is_collapsed == is there another layer of nesting
 is_collapsed <- function(x) inherits(x$.data, "arrow_dplyr_query")
 
 has_aggregation <- function(x) {

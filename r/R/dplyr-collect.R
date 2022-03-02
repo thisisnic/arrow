@@ -84,6 +84,9 @@ restore_dplyr_features <- function(df, query) {
   df
 }
 
+# how would I summarise in 1 sentence what this function is for?
+# it's called from inside summarise/join/head/tail
+# in the docs for dplyr::collapse, it says "forces generation of the SQL query"
 collapse.arrow_dplyr_query <- function(x, ...) {
   # Figure out what schema will result from the query
   x$schema <- implicit_schema(x)
@@ -94,8 +97,12 @@ collapse.Dataset <- collapse.ArrowTabular <- collapse.RecordBatchReader <- funct
   arrow_dplyr_query(x)
 }
 
+# works out what the schema of the data will be after the operations are done but
+# without actually having to *do* the operations
 implicit_schema <- function(.data) {
   .data <- ensure_group_vars(.data)
+  # I don't get this; how come this only goes down 1 layer of nesting?
+  # I guess it must be that at the level below has already been updated
   old_schm <- .data$.data$schema
 
   if (is.null(.data$aggregations)) {
