@@ -29,6 +29,8 @@ collect.arrow_dplyr_query <- function(x, as_data_frame = TRUE, ...) {
   # See query-engine.R for ExecPlan/Nodes
   tryCatch(
     tab <- do_exec_plan(x),
+    # LOL, I really should have added a comment about why the hell it
+    # made sense for me to put this here as now I can't remember
     error = function(e) {
       handle_csv_read_error(e, x$.data$schema)
     }
@@ -87,6 +89,9 @@ restore_dplyr_features <- function(df, query) {
 # how would I summarise in 1 sentence what this function is for?
 # it's called from inside summarise/join/head/tail
 # in the docs for dplyr::collapse, it says "forces generation of the SQL query"
+# this is a bit different here; it updates the schema to what the output schema will be
+# and makes sure any features we have in dplyr that aren't in the Arrow
+# (e.g. grouping metadata) are still there
 collapse.arrow_dplyr_query <- function(x, ...) {
   # Figure out what schema will result from the query
   x$schema <- implicit_schema(x)
@@ -107,6 +112,8 @@ implicit_schema <- function(.data) {
 
   if (is.null(.data$aggregations)) {
     new_fields <- map(.data$selected_columns, ~ .$type(old_schm))
+
+    # Sort out joins
     if (!is.null(.data$join) && !(.data$join$type %in% JoinType[1:4])) {
       # Add cols from right side, except for semi/anti joins
       right_cols <- .data$join$right_data$selected_columns
@@ -115,6 +122,7 @@ implicit_schema <- function(.data) {
         ~ .$type(.data$join$right_data$.data$schema)
       ))
     }
+  # if there's aggregations need to do it differently
   } else {
     new_fields <- map(summarize_projection(.data), ~ .$type(old_schm))
     # * Put group_by_vars first (this can't be done by summarize,

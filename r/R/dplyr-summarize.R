@@ -294,6 +294,7 @@ arrow_eval_or_stop <- function(expr, mask) {
   out
 }
 
+# Vector containing ???
 summarize_projection <- function(.data) {
   c(
     map(.data$aggregations, ~ .$data),

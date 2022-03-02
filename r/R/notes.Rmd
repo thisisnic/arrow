@@ -1,0 +1,8 @@
+OK, so the first code "path" I need to be thinking about is:
+
+1. `arrow_dplyr_query` object
+2. `collect()`
+3. `do_exec_plan()`
+
+This takes the thing we're collecting our query in and gets it into the right 
+state to actually put together the query plan.
