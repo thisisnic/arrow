@@ -4,5 +4,5 @@ OK, so the first code "path" I need to be thinking about is:
 2. `collect()`
 3. `do_exec_plan()`
 
-This takes the thing we're collecting our query in and gets it into the right 
+This takes the thing we're building our query in and gets it into the right 
 state to actually put together the query plan.
