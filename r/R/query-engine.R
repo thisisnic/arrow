@@ -16,7 +16,10 @@
 # under the License.
 
 do_exec_plan <- function(.data) {
+  # instatiate the exec plan
   plan <- ExecPlan$create()
+
+  # what is this?
   final_node <- plan$Build(.data)
   tab <- plan$Run(final_node)
 
