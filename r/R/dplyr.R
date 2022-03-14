@@ -49,7 +49,7 @@ arrow_dplyr_query <- function(.data) {
       #   records any renaming)
       selected_columns = make_field_refs(names(.data$schema)),
       # filtered_rows will be an Expression
-      filtered_rows = TRUE,
+      filtered_rows = TRUE, # why is this set to TRUE?
       # group_by_vars is a character vector of columns (as renamed)
       # in the data. They will be kept when data is pulled into R.
       group_by_vars = gv,
@@ -247,6 +247,7 @@ source_data <- function(x) {
   }
 }
 
+# i.e. is_collapsed == is there another layer of nesting
 is_collapsed <- function(x) inherits(x$.data, "arrow_dplyr_query")
 
 has_aggregation <- function(x) {

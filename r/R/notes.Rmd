@@ -1,0 +1,30 @@
+OK, so the first code "path" I need to be thinking about is:
+
+1. `arrow_dplyr_query` object
+2. `collect()`
+3. `do_exec_plan()`
+
+This takes the thing we're building our query in and gets it into the right 
+state to actually put together the query plan.
+
+I think I need more knowledge of ExecPlans and ExecNodes at a conceptual level now.
+
+First things; what methods do they have?
+
+ExecPlan:
+
+* Scan
+* Build
+* Run
+* Stop
+
+ExecNode:
+
+* sort
+* head
+* tail
+* preserve_sort
+* Project
+* Filter
+* Aggregate
+* Join
