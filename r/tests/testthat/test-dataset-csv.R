@@ -380,3 +380,42 @@ test_that("skip argument in open_dataset", {
   )
   expect_equal(collect(ds), tbl)
 })
+
+test_that("Correctly handles partitioned CSV datasets supplied with schemas", {
+
+  required_schema <- schema(
+    int = int64(),
+    dbl = float64(),
+    chr = utf8(),
+    lgl = bool(),
+    dttm = timestamp(unit = "ns", timezone = "UTC"),
+    grp = utf8()
+  )
+
+  # hive-style
+  hive_partitioned_dir <- make_temp_dir()
+  write_dataset(example_data_for_sorting, hive_partitioned_dir, partitioning = "grp", format = "csv")
+  hive_dataset <- open_dataset(
+    hive_partitioned_dir,
+    format = "csv",
+    schema = required_schema,
+    skip = 1
+  ) %>%
+    collect()
+
+  expect_named(hive_dataset, c("int", "dbl", "chr", "lgl", "dttm", "grp"))
+
+  # non-hive-style
+  non_hive_partitioned_dir <- make_temp_dir()
+  write_dataset(example_data_for_sorting, non_hive_partitioned_dir, partitioning = "grp", format = "csv", hive_style = FALSE)
+
+  non_hive_dataset <- open_dataset(
+    non_hive_partitioned_dir,
+    format = "csv",
+    schema = required_schema,
+    skip = 1
+  ) %>%
+    collect()
+
+  expect_named(non_hive_dataset, c("int", "dbl", "chr", "lgl", "dttm", "grp"))
+})
