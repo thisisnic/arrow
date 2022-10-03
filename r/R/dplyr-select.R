@@ -38,7 +38,7 @@ rename_with.arrow_dplyr_query <- function(.data, .fn, .cols = everything(), ...)
 rename_with.Dataset <- rename_with.ArrowTabular <- rename_with.RecordBatchReader <- rename_with.arrow_dplyr_query
 
 column_select <- function(.data, select_expression, .FUN = eval_select) {
-  # .FUN is either tidyselect::vars_select or tidyselect::vars_rename
+  # .FUN is either tidyselect::eval_select or tidyselect::eval_rename
   # It operates on the names() of selected_columns, i.e. the column names
   # factoring in any renaming that may already have happened
   sim_df <- simulate_data_frame(.data$.data$schema)
