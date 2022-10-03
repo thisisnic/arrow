@@ -26,7 +26,7 @@ select.arrow_dplyr_query <- function(.data, ...) {
 select.Dataset <- select.ArrowTabular <- select.RecordBatchReader <- select.arrow_dplyr_query
 
 rename.arrow_dplyr_query <- function(.data, ...) {
-  column_select(as_adq(.data), ..., .FUN = eval_rename)
+  column_select(as_adq(.data), enquos(...), .FUN = eval_rename)
 }
 rename.Dataset <- rename.ArrowTabular <- rename.RecordBatchReader <- rename.arrow_dplyr_query
 
@@ -37,12 +37,13 @@ rename_with.arrow_dplyr_query <- function(.data, .fn, .cols = everything(), ...)
 }
 rename_with.Dataset <- rename_with.ArrowTabular <- rename_with.RecordBatchReader <- rename_with.arrow_dplyr_query
 
-column_select <- function(.data, ..., .FUN = eval_select) {
+column_select <- function(.data, select_expression, .FUN = eval_select) {
   # .FUN is either tidyselect::vars_select or tidyselect::vars_rename
   # It operates on the names() of selected_columns, i.e. the column names
   # factoring in any renaming that may already have happened
   sim_df <- simulate_data_frame(.data$.data$schema)
-  out <- .FUN(data = sim_df, expr = ...)
+  out <- .FUN(data = sim_df, expr(c(!!!select_expression)))
+
   # Make sure that the resulting selected columns map back to the original data,
   # as in when there are multiple renaming steps
   .data$selected_columns <- set_names(.data$selected_columns[out], names(out))
