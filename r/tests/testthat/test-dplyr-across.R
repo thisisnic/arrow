@@ -212,6 +212,17 @@ test_that("expand_across correctly expands quosures", {
     regexp = "`.names` specification must produce (number of columns * number of functions) names.",
     fixed = TRUE
   )
+
+  # where
+  expect_across_equal(
+    quos(across(where(is.double), round)),
+    quos(
+      dbl = round(dbl),
+      dbl2 = round(dbl2)
+    ),
+    example_data
+  )
+
 })
 
 test_that("purrr-style lambda functions are supported", {
