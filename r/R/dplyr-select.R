@@ -21,14 +21,12 @@
 tbl_vars.arrow_dplyr_query <- function(x) names(x$selected_columns)
 
 select.arrow_dplyr_query <- function(.data, ...) {
-  check_select_helpers(enexprs(...))
-  column_select(as_adq(.data), !!!enquos(...))
+  column_select(as_adq(.data), enquos(...))
 }
 select.Dataset <- select.ArrowTabular <- select.RecordBatchReader <- select.arrow_dplyr_query
 
 rename.arrow_dplyr_query <- function(.data, ...) {
-  check_select_helpers(enexprs(...))
-  column_select(as_adq(.data), !!!enquos(...), .FUN = vars_rename)
+  column_select(as_adq(.data), ..., .FUN = eval_rename)
 }
 rename.Dataset <- rename.ArrowTabular <- rename.RecordBatchReader <- rename.arrow_dplyr_query
 
@@ -39,11 +37,12 @@ rename_with.arrow_dplyr_query <- function(.data, .fn, .cols = everything(), ...)
 }
 rename_with.Dataset <- rename_with.ArrowTabular <- rename_with.RecordBatchReader <- rename_with.arrow_dplyr_query
 
-column_select <- function(.data, ..., .FUN = vars_select) {
+column_select <- function(.data, ..., .FUN = eval_select) {
   # .FUN is either tidyselect::vars_select or tidyselect::vars_rename
   # It operates on the names() of selected_columns, i.e. the column names
   # factoring in any renaming that may already have happened
-  out <- .FUN(names(.data), !!!enquos(...))
+  sim_df <- simulate_data_frame(.data$.data$schema)
+  out <- .FUN(data = sim_df, expr = ...)
   # Make sure that the resulting selected columns map back to the original data,
   # as in when there are multiple renaming steps
   .data$selected_columns <- set_names(.data$selected_columns[out], names(out))
@@ -114,19 +113,3 @@ relocate.arrow_dplyr_query <- function(.data, ..., .before = NULL, .after = NULL
   .data
 }
 relocate.Dataset <- relocate.ArrowTabular <- relocate.RecordBatchReader <- relocate.arrow_dplyr_query
-
-check_select_helpers <- function(exprs) {
-  # Throw an error if unsupported tidyselect selection helpers in `exprs`
-  exprs <- lapply(exprs, function(x) if (is_quosure(x)) quo_get_expr(x) else x)
-  unsup_select_helpers <- "where"
-  funs_in_exprs <- unlist(lapply(exprs, all_funs))
-  unsup_funs <- funs_in_exprs[funs_in_exprs %in% unsup_select_helpers]
-  if (length(unsup_funs)) {
-    stop(
-      "Unsupported selection ",
-      ngettext(length(unsup_funs), "helper: ", "helpers: "),
-      oxford_paste(paste0(unsup_funs, "()"), quote = FALSE),
-      call. = FALSE
-    )
-  }
-}
