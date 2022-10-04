@@ -43,10 +43,19 @@ column_select <- function(.data, select_expression, .FUN = eval_select) {
   # factoring in any renaming that may already have happened
   sim_df <- simulate_data_frame(.data$.data$schema)
   out <- .FUN(data = sim_df, expr(c(!!!select_expression)))
-
   # Make sure that the resulting selected columns map back to the original data,
   # as in when there are multiple renaming steps
-  .data$selected_columns <- set_names(.data$selected_columns[out], names(out))
+  if (identical(.FUN, eval_select)) {
+    .data$selected_columns <- set_names(.data$selected_columns[out], names(out))
+  } else if (identical(.FUN, eval_rename)) {
+    new_names <- names(.data$selected_columns)
+    new_names[out] <- names(out)
+    .data$selected_columns <- set_names(.data$selected_columns, new_names)
+  } else {
+    abort("`.FUN` must be one of `eval_select` or `eval_rename`")
+  }
+
+
 
   # If we've renamed columns, we need to project that renaming into other
   # query parameters we've collected
