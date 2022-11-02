@@ -450,6 +450,19 @@ StructArray <- R6Class("StructArray",
   )
 )
 
+StructArray$create <- function(...) {
+
+  dots <- list2(...)
+
+  if (length(dots) == 1 && is.data.frame(dots[[1]])) {
+    return(Array$create(dots[[1]]))
+  }
+
+
+
+
+}
+
 
 #' @export
 `[[.StructArray` <- function(x, i, ...) {
