@@ -18,7 +18,6 @@
 -->
 
 # arrow 10.0.1
-# arrow 10.0.0.9000
 
 Minor improvements and fixes:
 
