@@ -869,17 +869,6 @@ test_that("Array$create() should have helpful error", {
   expect_error(Array$create(list(lgl, lgl, int)), "Expecting a logical vector")
   expect_error(Array$create(list(char, num, char)), "Expecting a character vector")
 
-  # hint at casting if direct fails and casting looks like it might work
-  expect_error(
-    Array$create(as.double(1:10), type = decimal(4, 2)),
-    "You might want to try casting manually"
-  )
-
-  expect_error(
-    Array$create(1:10, type = decimal(12, 2)),
-    "You might want to try casting manually"
-  )
-
   a <- expect_error(Array$create("one", int32()))
   b <- expect_error(vec_to_Array("one", int32()))
   # the captured conditions (errors) are not identical, but their messages should be
@@ -1324,16 +1313,16 @@ test_that("Array to C-interface", {
 
 test_that("direct creation of Decimal Arrays (ARROW-11631)", {
 
-  decimal_array <- Array$create(c(1, NA), type = decimal128(10, 2))
-  decimal_array2 <- Array$create(c(1, NA), type = decimal256(10, 2))
+  decimal_array <- Array$create(c(1, NA), type = decimal128(12, 2))
+  decimal_array2 <- Array$create(c(1:10, NA), type = decimal256(12, 2))
 
   expect_equal(
     decimal_array,
-    Array$create(c(1, NA))$cast(decimal(10, 2))
+    Array$create(c(1, NA))$cast(decimal(12, 2))
   )
 
   expect_equal(
     decimal_array2,
-    Array$create(c(1, NA))$cast(decimal256(10, 2))
+    Array$create(c(1:10, NA))$cast(decimal256(12, 2))
   )
 })
