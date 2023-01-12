@@ -193,7 +193,11 @@ CsvFileFormat$create <- function(...,
 check_csv_file_format_args <- function(...) {
   opts <- list(...)
   # Filter out arguments meant for CsvConvertOptions/CsvReadOptions
-  convert_opts <- c(names(formals(CsvConvertOptions$create)))
+  convert_opts <- setdiff(
+    c(names(formals(CsvConvertOptions$create))),
+    # include_columns is not supported
+    "include_columns"
+  )
 
   read_opts <- c(
     names(formals(CsvReadOptions$create)),
@@ -212,21 +216,18 @@ check_csv_file_format_args <- function(...) {
   # supported by read_delim_arrow() (and its wrappers) but are not yet
   # supported here
   unsup_readr_opts <- setdiff(
-    names(formals(read_delim_arrow)),
+    c(names(formals(read_delim_arrow))),
     c(convert_opts, read_opts, parse_opts, "schema")
   )
 
-  is_unsup_opt <- opt_names %in% unsup_readr_opts
-  unsup_opts <- opt_names[is_unsup_opt]
-  if (length(unsup_opts)) {
-    stop(
-      "The following ",
-      ngettext(length(unsup_opts), "option is ", "options are "),
-      "supported in \"read_delim_arrow\" functions ",
-      "but not yet supported here: ",
-      oxford_paste(unsup_opts),
-      call. = FALSE
-    )
+  unsup_arrow_opts <- "include_columns"
+  unsup_opts <- c(unsup_arrow_opts, unsup_readr_opts)
+
+  is_unsup_opt <- opt_names %in% unsup_opts
+  unsup_opts_found <- opt_names[is_unsup_opt]
+
+  if (length(unsup_opts_found)) {
+    unsup_opts_error(unsup_opts_found)
   }
 
   # Catch any options with full or partial names that do not match any of the
@@ -556,3 +557,14 @@ FileWriteOptions$create <- function(format, ...) {
   options <- dataset___FileFormat__DefaultWriteOptions(format)
   options$update(...)
 }
+
+unsup_opts_error <- function(unsup_opts){
+    abort(
+      "The following ",
+      ngettext(length(unsup_opts), "option is ", "options are "),
+      "supported in \"read_delim_arrow\" functions ",
+      "but not yet supported here: ",
+      oxford_paste(unsup_opts),
+      call. = FALSE
+    )
+  }

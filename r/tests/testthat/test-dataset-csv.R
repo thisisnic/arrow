@@ -476,3 +476,13 @@ test_that("CSV reading/parsing/convert options can be passed in as lists", {
 
   expect_equal(ds1, ds2)
 })
+
+test_that("error if incompatible CsvConvertOptions passed into open_dataset", {
+
+  expect_error(
+    open_dataset(csv_dir, format = "csv", convert_options = CsvConvertOptions$create(include_columns = "fnt")),
+    regexp = 'The following option is supported in "read_delim_arrow" functions but not yet supported here: "include_columns"',
+    fixed = TRUE
+  )
+
+})
