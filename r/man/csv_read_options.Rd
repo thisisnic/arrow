@@ -32,7 +32,11 @@ be "f0", "f1", ..., "fN".}
 
 \item{encoding}{The file encoding. (default \code{"UTF-8"})}
 
+<<<<<<< HEAD
 \item{skip_rows_after_names}{Number of lines to skip after the column names (default 0).
+=======
+\item{skip_rows_after_names`}{Number of lines to skip after the column names (default 0).
+>>>>>>> 43830d4d4 (Add read options)
 This number can be larger than the number of rows in one block, and empty rows are counted.
 The order of application is as follows:
 - \code{skip_rows} is applied (if non-zero);
@@ -42,6 +46,7 @@ The order of application is as follows:
 \description{
 CSV Reading Options
 }
+<<<<<<< HEAD
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
@@ -49,3 +54,5 @@ writeLines('my file has a non-data header\nx\n1\n2', tf)
 read_csv_arrow(tf, read_options = csv_read_options(skip_rows = 1))
 open_csv_dataset(tf, read_options = csv_read_options(skip_rows = 1))
 }
+=======
+>>>>>>> 43830d4d4 (Add read options)
