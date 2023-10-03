@@ -19,7 +19,11 @@ csv_convert_options(
 )
 }
 \arguments{
+<<<<<<< HEAD
 \item{check_utf8}{Logical: check UTF8 validity of string columns?}
+=======
+\item{check_utf8}{Logical: check UTF8 validity of string columns? (default \code{TRUE})}
+>>>>>>> bb77198a1 (Add CSV convert options)
 
 \item{null_values}{Character vector of recognized spellings for null values.
 Analogous to the \code{na.strings} argument to
@@ -30,12 +34,21 @@ Analogous to the \code{na.strings} argument to
 \item{false_values}{Character vector of recognized spellings for \code{FALSE} values}
 
 \item{strings_can_be_null}{Logical: can string / binary columns have
+<<<<<<< HEAD
 null values? Similar to the \code{quoted_na} argument to \code{\link[readr:read_delim]{readr::read_csv()}}}
+=======
+null values? Similar to the \code{quoted_na} argument to \code{\link[readr:read_delim]{readr::read_csv()}}.
+(default \code{FALSE})}
+>>>>>>> bb77198a1 (Add CSV convert options)
 
 \item{col_types}{A \code{Schema} or \code{NULL} to infer types}
 
 \item{auto_dict_encode}{Logical: Whether to try to automatically
+<<<<<<< HEAD
 dictionary-encode string / binary data (think \code{stringsAsFactors}).
+=======
+dictionary-encode string / binary data (think \code{stringsAsFactors}). Default \code{FALSE}.
+>>>>>>> bb77198a1 (Add CSV convert options)
 This setting is ignored for non-inferred columns (those in \code{col_types}).}
 
 \item{auto_dict_max_cardinality}{If \code{auto_dict_encode}, string/binary columns
@@ -60,6 +73,7 @@ starting from the beginning of this vector. Possible values are
 \description{
 CSV Convert Options
 }
+<<<<<<< HEAD
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
@@ -67,3 +81,5 @@ writeLines('x\n1\nNULL\n2\nNA', tf)
 read_csv_arrow(tf, convert_options = csv_convert_options(null_values =  c("", "NA", "NULL")))
 open_csv_dataset(tf, convert_options = csv_convert_options(null_values =  c("", "NA", "NULL")))
 }
+=======
+>>>>>>> bb77198a1 (Add CSV convert options)
