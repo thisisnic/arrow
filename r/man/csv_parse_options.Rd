@@ -16,6 +16,7 @@ csv_parse_options(
 )
 }
 \arguments{
+<<<<<<< HEAD
 \item{delimiter}{Field delimiting character}
 
 \item{quoting}{Logical: are strings quoted?}
@@ -30,6 +31,22 @@ csv_parse_options(
 
 \item{newlines_in_values}{Logical: are values allowed to contain CR (\code{0x0d})
 and LF (\code{0x0a}) characters?}
+=======
+\item{delimiter}{Field delimiting character (default \code{","})}
+
+\item{quoting}{Logical: are strings quoted? (default \code{TRUE})}
+
+\item{quote_char}{Quoting character, if \code{quoting} is \code{TRUE} (default \code{'"'})}
+
+\item{double_quote}{Logical: are quotes inside values double-quoted? (default \code{TRUE})}
+
+\item{escaping}{Logical: whether escaping is used (default \code{FALSE})}
+
+\item{escape_char}{Escaping character, if \code{escaping} is \code{TRUE} (default \code{"\\\\"})}
+
+\item{newlines_in_values}{Logical: are values allowed to contain CR (\code{0x0d})
+and LF (\code{0x0a}) characters? (default \code{FALSE})}
+>>>>>>> 67867258a (Add csv_parse_options)
 
 \item{ignore_empty_lines}{Logical: should empty lines be ignored (default) or
 generate a row of missing values (if \code{FALSE})?}
@@ -37,6 +54,7 @@ generate a row of missing values (if \code{FALSE})?}
 \description{
 CSV Parsing Options
 }
+<<<<<<< HEAD
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
@@ -44,3 +62,5 @@ writeLines('x\n1\n\n2', tf)
 read_csv_arrow(tf, parse_options = csv_parse_options(ignore_empty_lines =  FALSE))
 open_csv_dataset(tf, parse_options = csv_parse_options(ignore_empty_lines =  FALSE))
 }
+=======
+>>>>>>> 67867258a (Add csv_parse_options)

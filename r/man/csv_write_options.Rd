@@ -4,6 +4,9 @@
 \alias{csv_write_options}
 \title{CSV Writing Options}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 67867258a (Add csv_parse_options)
 \usage{
 csv_write_options(
   include_header = TRUE,
@@ -14,6 +17,7 @@ csv_write_options(
   quoting_style = c("Needed", "AllValid", "None")
 )
 }
+<<<<<<< HEAD
 \arguments{
 \item{include_header}{Whether to write an initial header line with column names}
 
@@ -21,6 +25,8 @@ csv_write_options(
 
 \item{null_string}{The string to be written for null values. Must not contain quotation marks.}
 =======
+=======
+>>>>>>> 67867258a (Add csv_parse_options)
 \arguments{
 \item{include_header}{Whether to write an initial header line with column names}
 
