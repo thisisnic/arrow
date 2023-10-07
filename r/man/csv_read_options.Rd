@@ -51,6 +51,9 @@ The order of application is as follows:
 CSV Reading Options
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1158530af (Add example for read_csv_options)
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
@@ -58,5 +61,8 @@ writeLines('my file has a non-data header\nx\n1\n2', tf)
 read_csv_arrow(tf, read_options = csv_read_options(skip_rows = 1))
 open_csv_dataset(tf, read_options = csv_read_options(skip_rows = 1))
 }
+<<<<<<< HEAD
 =======
 >>>>>>> 43830d4d4 (Add read options)
+=======
+>>>>>>> 1158530af (Add example for read_csv_options)
