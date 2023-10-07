@@ -30,11 +30,15 @@ csv_write_options(
 \arguments{
 \item{include_header}{Whether to write an initial header line with column names}
 
-\item{batch_size}{Maximum number of rows processed at a time. Default is 1024.}
+\item{batch_size}{Maximum number of rows processed at a time.}
 
+<<<<<<< HEAD
 \item{null_string}{The string to be written for null values. Must not contain quotation marks. Default is an empty
 string (\code{""}).}
 >>>>>>> 8c4e5557d (Add csv_write_options)
+=======
+\item{null_string}{The string to be written for null values. Must not contain quotation marks.}
+>>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
 
 \item{delimiter}{Field delimiter}
 
