@@ -52,10 +52,16 @@ quotes), or "None" (Do not enclose any values in quotes).}
 CSV Writing Options
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1e72c6ce3 (Add example for csv_write_options)
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
 write_csv_arrow(airquality, tf, write_options = csv_write_options(null_string = "-99"))
 }
+<<<<<<< HEAD
 =======
 >>>>>>> 8c4e5557d (Add csv_write_options)
+=======
+>>>>>>> 1e72c6ce3 (Add example for csv_write_options)
