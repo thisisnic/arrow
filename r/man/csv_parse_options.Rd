@@ -16,8 +16,6 @@ csv_parse_options(
 )
 }
 \arguments{
-<<<<<<< HEAD
-<<<<<<< HEAD
 \item{delimiter}{Field delimiting character}
 
 \item{quoting}{Logical: are strings quoted?}
@@ -32,29 +30,6 @@ csv_parse_options(
 
 \item{newlines_in_values}{Logical: are values allowed to contain CR (\code{0x0d})
 and LF (\code{0x0a}) characters?}
-=======
-\item{delimiter}{Field delimiting character (default \code{","})}
-=======
-\item{delimiter}{Field delimiting character}
->>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
-
-\item{quoting}{Logical: are strings quoted?}
-
-\item{quote_char}{Quoting character, if \code{quoting} is \code{TRUE}}
-
-\item{double_quote}{Logical: are quotes inside values double-quoted?}
-
-\item{escaping}{Logical: whether escaping is used}
-
-\item{escape_char}{Escaping character, if \code{escaping} is \code{TRUE}}
-
-\item{newlines_in_values}{Logical: are values allowed to contain CR (\code{0x0d})
-<<<<<<< HEAD
-and LF (\code{0x0a}) characters? (default \code{FALSE})}
->>>>>>> 67867258a (Add csv_parse_options)
-=======
-and LF (\code{0x0a}) characters?}
->>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
 
 \item{ignore_empty_lines}{Logical: should empty lines be ignored (default) or
 generate a row of missing values (if \code{FALSE})?}
@@ -62,19 +37,10 @@ generate a row of missing values (if \code{FALSE})?}
 \description{
 CSV Parsing Options
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 0662793c8 (Add example for csv_parse_options)
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
-writeLines('x\n1\n\n2', tf)
-read_csv_arrow(tf, parse_options = csv_parse_options(ignore_empty_lines =  FALSE))
-open_csv_dataset(tf, parse_options = csv_parse_options(ignore_empty_lines =  FALSE))
+writeLines("x\n1\n\n2", tf)
+read_csv_arrow(tf, parse_options = csv_parse_options(ignore_empty_lines = FALSE))
+open_csv_dataset(tf, parse_options = csv_parse_options(ignore_empty_lines = FALSE))
 }
-<<<<<<< HEAD
-=======
->>>>>>> 67867258a (Add csv_parse_options)
-=======
->>>>>>> 0662793c8 (Add example for csv_parse_options)

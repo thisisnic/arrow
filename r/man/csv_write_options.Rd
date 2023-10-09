@@ -3,10 +3,6 @@
 \name{csv_write_options}
 \alias{csv_write_options}
 \title{CSV Writing Options}
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 67867258a (Add csv_parse_options)
 \usage{
 csv_write_options(
   include_header = TRUE,
@@ -17,28 +13,12 @@ csv_write_options(
   quoting_style = c("Needed", "AllValid", "None")
 )
 }
-<<<<<<< HEAD
 \arguments{
 \item{include_header}{Whether to write an initial header line with column names}
 
 \item{batch_size}{Maximum number of rows processed at a time.}
 
 \item{null_string}{The string to be written for null values. Must not contain quotation marks.}
-=======
-=======
->>>>>>> 67867258a (Add csv_parse_options)
-\arguments{
-\item{include_header}{Whether to write an initial header line with column names}
-
-\item{batch_size}{Maximum number of rows processed at a time.}
-
-<<<<<<< HEAD
-\item{null_string}{The string to be written for null values. Must not contain quotation marks. Default is an empty
-string (\code{""}).}
->>>>>>> 8c4e5557d (Add csv_write_options)
-=======
-\item{null_string}{The string to be written for null values. Must not contain quotation marks.}
->>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
 
 \item{delimiter}{Field delimiter}
 
@@ -51,17 +31,8 @@ quotes), or "None" (Do not enclose any values in quotes).}
 \description{
 CSV Writing Options
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 1e72c6ce3 (Add example for csv_write_options)
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
 write_csv_arrow(airquality, tf, write_options = csv_write_options(null_string = "-99"))
 }
-<<<<<<< HEAD
-=======
->>>>>>> 8c4e5557d (Add csv_write_options)
-=======
->>>>>>> 1e72c6ce3 (Add example for csv_write_options)

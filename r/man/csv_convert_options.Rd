@@ -19,15 +19,7 @@ csv_convert_options(
 )
 }
 \arguments{
-<<<<<<< HEAD
-<<<<<<< HEAD
 \item{check_utf8}{Logical: check UTF8 validity of string columns?}
-=======
-\item{check_utf8}{Logical: check UTF8 validity of string columns? (default \code{TRUE})}
->>>>>>> bb77198a1 (Add CSV convert options)
-=======
-\item{check_utf8}{Logical: check UTF8 validity of string columns?}
->>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
 
 \item{null_values}{Character vector of recognized spellings for null values.
 Analogous to the \code{na.strings} argument to
@@ -38,29 +30,12 @@ Analogous to the \code{na.strings} argument to
 \item{false_values}{Character vector of recognized spellings for \code{FALSE} values}
 
 \item{strings_can_be_null}{Logical: can string / binary columns have
-<<<<<<< HEAD
-<<<<<<< HEAD
 null values? Similar to the \code{quoted_na} argument to \code{\link[readr:read_delim]{readr::read_csv()}}}
-=======
-null values? Similar to the \code{quoted_na} argument to \code{\link[readr:read_delim]{readr::read_csv()}}.
-(default \code{FALSE})}
->>>>>>> bb77198a1 (Add CSV convert options)
-=======
-null values? Similar to the \code{quoted_na} argument to \code{\link[readr:read_delim]{readr::read_csv()}}}
->>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
 
 \item{col_types}{A \code{Schema} or \code{NULL} to infer types}
 
 \item{auto_dict_encode}{Logical: Whether to try to automatically
-<<<<<<< HEAD
-<<<<<<< HEAD
 dictionary-encode string / binary data (think \code{stringsAsFactors}).
-=======
-dictionary-encode string / binary data (think \code{stringsAsFactors}). Default \code{FALSE}.
->>>>>>> bb77198a1 (Add CSV convert options)
-=======
-dictionary-encode string / binary data (think \code{stringsAsFactors}).
->>>>>>> 8cfca0702 (Remove description of default args in docs, replace internal usage with wrappers, reorganise what is mapped with what)
 This setting is ignored for non-inferred columns (those in \code{col_types}).}
 
 \item{auto_dict_max_cardinality}{If \code{auto_dict_encode}, string/binary columns
@@ -85,19 +60,10 @@ starting from the beginning of this vector. Possible values are
 \description{
 CSV Convert Options
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 118ae30c9 (Add examples for csv_convert_options)
 \examples{
 tf <- tempfile()
 on.exit(unlink(tf))
-writeLines('x\n1\nNULL\n2\nNA', tf)
-read_csv_arrow(tf, convert_options = csv_convert_options(null_values =  c("", "NA", "NULL")))
-open_csv_dataset(tf, convert_options = csv_convert_options(null_values =  c("", "NA", "NULL")))
+writeLines("x\n1\nNULL\n2\nNA", tf)
+read_csv_arrow(tf, convert_options = csv_convert_options(null_values = c("", "NA", "NULL")))
+open_csv_dataset(tf, convert_options = csv_convert_options(null_values = c("", "NA", "NULL")))
 }
-<<<<<<< HEAD
-=======
->>>>>>> bb77198a1 (Add CSV convert options)
-=======
->>>>>>> 118ae30c9 (Add examples for csv_convert_options)

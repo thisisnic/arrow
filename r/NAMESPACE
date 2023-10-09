@@ -308,19 +308,9 @@ export(contains)
 export(copy_files)
 export(cpu_count)
 export(create_package_with_all_dependencies)
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> bb77198a1 (Add CSV convert options)
 export(csv_convert_options)
 export(csv_parse_options)
 export(csv_read_options)
-<<<<<<< HEAD
-=======
-export(csv_parse_options)
->>>>>>> 67867258a (Add csv_parse_options)
-=======
->>>>>>> 43830d4d4 (Add read options)
 export(csv_write_options)
 export(dataset_factory)
 export(date32)
