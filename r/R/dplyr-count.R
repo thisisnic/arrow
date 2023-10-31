@@ -18,6 +18,7 @@
 # The following S3 methods are registered on load if dplyr is present
 
 count.arrow_dplyr_query <- function(
+
   
   x, ..., wt = NULL, sort = FALSE, name = NULL) {
   if (!missing(...)) {
