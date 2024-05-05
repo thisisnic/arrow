@@ -260,3 +260,90 @@ na.omit.ArrowTabular <- function(object, ...) {
 
 #' @export
 na.exclude.ArrowTabular <- na.omit.ArrowTabular
+
+#' @export
+print.ArrowTabular <- pillar:::print_tbl
+
+#' @export
+format.ArrowTabular <- pillar:::format_tbl
+
+#' @export
+ctl_new_rowid_pillar.ArrowTabular <- pillar:::ctl_new_rowid_pillar.tbl
+
+#' @export
+ctl_new_pillar.ArrowTabular <- pillar:::ctl_new_pillar.tbl
+
+#' @export
+ctl_new_pillar_list.ArrowTabular <- pillar:::ctl_new_pillar_list.tbl
+
+#' @export
+tbl_format_header.ArrowTabular <- pillar:::tbl_format_header.tbl
+
+#' @export
+tbl_format_body.ArrowTabular <- pillar:::tbl_format_body.tbl
+
+#' @export
+tbl_format_footer.ArrowTabular <- pillar:::tbl_format_footer.tbl
+
+
+#' @export
+tbl_format_setup.ArrowTabular <- function (x, width, ..., n, max_extra_cols, max_footer_lines, focus){
+
+  rows <- nrow(x)
+  if (is.na(rows)) {
+    df <- collect.ArrowTabular(head(x, n + 1))
+    if (nrow(df) <= n) {
+      rows <- nrow(df)
+    }
+    else {
+      df <- vec_head(df, n)
+    }
+  }
+  else {
+    df <- collect.ArrowTabular(head(x, n))
+  }
+  if (is.na(rows)) {
+    needs_dots <- (nrow(df) >= n)
+  }
+  else {
+    needs_dots <- (rows > n)
+  }
+  if (needs_dots) {
+    rows_missing <- rows - n
+  }
+  else {
+    rows_missing <- 0L
+  }
+  tbl_sum <- tbl_sum(x)
+  rownames(df) <- NULL
+  colonnade <- pillar:::ctl_colonnade(df, has_row_id = if (.row_names_info(x) >
+                                                  0)
+    "*"
+    else TRUE, width = width, controller = x, focus = focus)
+  body <- colonnade$body
+  # get the widths from body[1]
+
+
+  # get the types from controller and make sure they're the right width based on above
+  var_types <- map_chr(x$schema$fields, ~ format(pillar::new_pillar_type(.$type)))
+
+  # swap the line below for a function that calculates the width properly
+  body[2] <- paste(" ", paste(var_types, collapse = ""), collapse = "")
+
+  extra_cols <- colonnade$extra_cols
+  extra_cols_total <- length(extra_cols)
+  if (extra_cols_total > max_extra_cols) {
+    length(extra_cols) <- max_extra_cols
+  }
+  abbrev_cols <- colonnade$abbrev_cols
+  pillar:::new_tbl_format_setup(x = x, df = df, width = width, tbl_sum = tbl_sum,
+                       body = body, rows_missing = rows_missing, rows_total = rows,
+                       extra_cols = extra_cols, extra_cols_total = extra_cols_total,
+                       max_footer_lines = max_footer_lines, abbrev_cols = abbrev_cols)
+}
+
+#' @export
+tbl_sum.ArrowTabular <- function(x){
+  c("An Arrow Table" = paste(x$num_rows, "x", x$num_columns))
+}
+

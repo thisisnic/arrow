@@ -129,6 +129,17 @@ s3_finalizer <- new.env(parent = emptyenv())
   s3_register("dplyr::tbl_vars", "arrow_dplyr_query")
   s3_register("pillar::type_sum", "DataType")
 
+  s3_register("base::format", "ArrowTabular")
+  s3_register("pillar::tbl_format_setup", "ArrowTabular")
+  s3_register("pillar::tbl_sum", "ArrowTabular")
+  s3_register("pillar::ctl_new_rowid_pillar", "ArrowTabular")
+  s3_register("pillar::ctl_new_pillar", "ArrowTabular")
+  s3_register("pillar::ctl_new_pillar_list", "ArrowTabular")
+  s3_register("pillar::tbl_format_header", "ArrowTabular")
+  s3_register("pillar::tbl_format_footer", "ArrowTabular")
+  s3_register("pillar::tbl_format_body", "ArrowTabular")
+
+
   for (cl in c(
     "Array", "RecordBatch", "ChunkedArray", "Table", "Schema",
     "Field", "DataType", "RecordBatchReader"
