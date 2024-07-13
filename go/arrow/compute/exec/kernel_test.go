@@ -22,12 +22,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apache/arrow/go/v14/arrow"
-	"github.com/apache/arrow/go/v14/arrow/array"
-	"github.com/apache/arrow/go/v14/arrow/compute"
-	"github.com/apache/arrow/go/v14/arrow/compute/exec"
-	"github.com/apache/arrow/go/v14/arrow/memory"
-	"github.com/apache/arrow/go/v14/arrow/scalar"
+	"github.com/apache/arrow/go/v17/arrow"
+	"github.com/apache/arrow/go/v17/arrow/array"
+	"github.com/apache/arrow/go/v17/arrow/compute"
+	"github.com/apache/arrow/go/v17/arrow/compute/exec"
+	"github.com/apache/arrow/go/v17/arrow/memory"
+	"github.com/apache/arrow/go/v17/arrow/scalar"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -35,12 +35,12 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/apache/arrow/go/v14/arrow"
-	"github.com/apache/arrow/go/v14/arrow/array"
-	"github.com/apache/arrow/go/v14/arrow/decimal128"
-	"github.com/apache/arrow/go/v14/arrow/internal/arrdata"
-	"github.com/apache/arrow/go/v14/arrow/memory"
-	"github.com/apache/arrow/go/v14/arrow/memory/mallocator"
+	"github.com/apache/arrow/go/v17/arrow"
+	"github.com/apache/arrow/go/v17/arrow/array"
+	"github.com/apache/arrow/go/v17/arrow/decimal128"
+	"github.com/apache/arrow/go/v17/arrow/internal/arrdata"
+	"github.com/apache/arrow/go/v17/arrow/memory"
+	"github.com/apache/arrow/go/v17/arrow/memory/mallocator"
 	"github.com/stretchr/testify/assert"
 )
 

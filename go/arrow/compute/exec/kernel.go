@@ -24,10 +24,10 @@ import (
 	"hash/maphash"
 	"strings"
 
-	"github.com/apache/arrow/go/v14/arrow"
-	"github.com/apache/arrow/go/v14/arrow/bitutil"
-	"github.com/apache/arrow/go/v14/arrow/internal/debug"
-	"github.com/apache/arrow/go/v14/arrow/memory"
+	"github.com/apache/arrow/go/v17/arrow"
+	"github.com/apache/arrow/go/v17/arrow/bitutil"
+	"github.com/apache/arrow/go/v17/arrow/internal/debug"
+	"github.com/apache/arrow/go/v17/arrow/memory"
 	"golang.org/x/exp/slices"
 )
 

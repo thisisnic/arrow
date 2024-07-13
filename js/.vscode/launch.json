@@ -5,24 +5,14 @@
   "version": "0.2.0",
   "inputs": [
     {
-      "type": "pickString",
-      "default": "src",
+      "type": "command",
       "id": "TEST_TARGET",
-      "options": [
-        "src",
-        "apache-arrow",
-        "ts",
-        "es5.cjs",
-        "es5.esm",
-        "es5.umd",
-        "es2015.cjs",
-        "es2015.esm",
-        "es2015.umd",
-        "esnext.cjs",
-        "esnext.esm",
-        "esnext.umd",
-      ],
-      "description": "The JS version + Module format combination to test (or src to test source files)",
+      "command": "shellCommand.execute",
+      "args": {
+        "cwd": "${workspaceFolder}",
+        "description": "The JS version + Module format combination to test (or src to test source files)",
+        "command": "echo \"src\napache-arrow\nts\nes5.cjs\nes5.esm\nes5.umd\nes2015.cjs\nes2015.esm\nes2015.umd\nesnext.cjs\nesnext.esm\nesnext.umd\""
+      }
     },
     {
       "type": "command",
@@ -31,7 +21,7 @@
       "args": {
         "cwd": "${workspaceFolder}",
         "description": "Select a file to debug",
-        "command": "./node_modules/.bin/jest --listTests | sed -r \"s@$PWD/test/@@g\"",
+        "command": "node_modules/.bin/jest --listTests | sed -r \"s@$PWD/test/@@g\"",
       }
     },
     {
@@ -50,7 +40,7 @@
       "command": "shellCommand.execute",
       "args": {
         "useSingleResult": "true",
-        "command": "case \"${input:TEST_TARGET}\" in *cjs | *umd | apache-arrow) echo '';; *) echo '--experimental-vm-modules';; esac"
+        "command": "case \"${input:TEST_TARGET}\" in *cjs | *umd) echo '--no-warnings';; *) echo '--experimental-vm-modules';; esac"
       }
     },
   ],
@@ -98,25 +88,23 @@
       "request": "launch",
       "name": "Debug Integration Tests",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/bin/integration.js",
+      "program": "${workspaceFolder}/bin/integration.ts",
       "skipFiles": [
         "<node_internals>/**/*.js",
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "env": {
         "NODE_NO_WARNINGS": "1",
-        "ARROW_JS_DEBUG": "src",
         "TS_NODE_CACHE": "false"
       },
       "runtimeArgs": [
-        "-r",
-        "ts-node/register"
+        "--loader", "ts-node/esm/transpile-only"
       ],
       "args": [
         "--mode",
         "VALIDATE",
         "-j", "test/data/json/unions.json",
-        "-a", "./test/data/cpp/stream/struct_example.arrow"
+        "-a", "test/data/cpp/stream/unions.arrow"
       ]
     },
     {
@@ -140,8 +128,7 @@
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "runtimeArgs": [
-        "--loader",
-        "ts-node/esm/transpile-only"
+        "--loader", "ts-node/esm/transpile-only"
       ]
     },
     {
@@ -150,12 +137,10 @@
       "name": "Debug bin/arrow2csv",
       "cwd": "${workspaceFolder}",
       "env": {
-        "ARROW_JS_DEBUG": "src",
         "TS_NODE_CACHE": "false"
       },
       "runtimeArgs": [
-        "-r",
-        "ts-node/register"
+        "--loader", "ts-node/esm/transpile-only"
       ],
       "console": "integratedTerminal",
       "skipFiles": [
@@ -165,7 +150,7 @@
       "args": [
         "${workspaceFolder}/src/bin/arrow2csv.ts",
         "-f",
-        "./test/data/cpp/stream/simple.arrow"
+        "test/data/cpp/stream/simple.arrow"
       ]
     },
     {
@@ -174,21 +159,19 @@
       "name": "Debug bin/file-to-stream",
       "cwd": "${workspaceFolder}",
       "env": {
-        "ARROW_JS_DEBUG": "src",
         "TS_NODE_CACHE": "false"
       },
       "runtimeArgs": [
-        "-r",
-        "ts-node/register"
+        "--loader", "ts-node/esm/transpile-only"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js",
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "args": [
-        "${workspaceFolder}/bin/file-to-stream.js",
-        "./test/data/cpp/file/struct_example.arrow",
-        "./struct_example-stream-out.arrow",
+        "${workspaceFolder}/bin/file-to-stream.ts",
+        "test/data/cpp/file/struct_example.arrow",
+        "struct_example-stream-out.arrow",
       ]
     },
     {
@@ -197,21 +180,19 @@
       "name": "Debug bin/stream-to-file",
       "cwd": "${workspaceFolder}",
       "env": {
-        "ARROW_JS_DEBUG": "src",
         "TS_NODE_CACHE": "false"
       },
       "runtimeArgs": [
-        "-r",
-        "ts-node/register"
+        "--loader", "ts-node/esm/transpile-only"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js",
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "args": [
-        "${workspaceFolder}/bin/stream-to-file.js",
-        "./test/data/cpp/stream/struct_example.arrow",
-        "./struct_example-file-out.arrow",
+        "${workspaceFolder}/bin/stream-to-file.ts",
+        "test/data/cpp/stream/struct_example.arrow",
+        "struct_example-file-out.arrow",
       ]
     },
     {
@@ -220,23 +201,21 @@
       "name": "Debug bin/json-to-arrow",
       "cwd": "${workspaceFolder}",
       "env": {
-        "ARROW_JS_DEBUG": "src",
         "TS_NODE_CACHE": "false"
       },
       "runtimeArgs": [
-        "-r",
-        "ts-node/register"
+        "--loader", "ts-node/esm/transpile-only"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js",
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "args": [
-        "${workspaceFolder}/bin/json-to-arrow.js",
+        "${workspaceFolder}/bin/json-to-arrow.ts",
         "-j",
-        "./test/data/json/struct_example.json",
+        "test/data/json/struct_example.json",
         "-a",
-        "./struct_example-stream-out.arrow",
+        "struct_example-stream-out.arrow",
         "-f",
         "stream"
       ]
@@ -247,20 +226,18 @@
       "name": "Debug bin/print-buffer-alignment",
       "cwd": "${workspaceFolder}",
       "env": {
-        "ARROW_JS_DEBUG": "src",
         "TS_NODE_CACHE": "false"
       },
       "runtimeArgs": [
-        "-r",
-        "ts-node/register"
+        "--loader", "ts-node/esm/transpile-only"
       ],
       "skipFiles": [
         "<node_internals>/**/*.js",
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "args": [
-        "${workspaceFolder}/bin/print-buffer-alignment.js",
-        "./test/data/cpp/stream/struct_example.arrow"
+        "${workspaceFolder}/bin/print-buffer-alignment.ts",
+        "test/data/cpp/stream/struct_example.arrow"
       ]
     },
     {
