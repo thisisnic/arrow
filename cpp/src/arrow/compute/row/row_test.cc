@@ -69,9 +69,14 @@ TEST(RowTableMemoryConsumption, Encode) {
   constexpr int64_t num_rows_max = 8192;
   constexpr int64_t padding_for_vectors = 64;
 
-  ASSERT_OK_AND_ASSIGN(
-      auto fixed_length_column,
-      ::arrow::gen::Constant(std::make_shared<UInt32Scalar>(0))->Generate(num_rows_max));
+  std::vector<std::shared_ptr<Array>> fixed_length_columns;
+  for (const auto& dt : {int8(), uint16(), int32(), uint64(), fixed_size_binary(16),
+                         fixed_size_binary(32)}) {
+    ASSERT_OK_AND_ASSIGN(auto fixed_length_column,
+                         ::arrow::gen::Random(dt)->Generate(num_rows_max));
+    fixed_length_columns.push_back(std::move(fixed_length_column));
+  }
+
   ASSERT_OK_AND_ASSIGN(auto var_length_column,
                        ::arrow::gen::Constant(std::make_shared<BinaryScalar>("X"))
                            ->Generate(num_rows_max));
@@ -81,22 +86,26 @@ TEST(RowTableMemoryConsumption, Encode) {
     {
       SCOPED_TRACE("encoding fixed length column of " + std::to_string(num_rows) +
                    " rows");
-      ASSERT_OK_AND_ASSIGN(auto row_table,
-                           MakeRowTableFromColumn(fixed_length_column, num_rows,
-                                                  uint32()->byte_width(), 0));
-      ASSERT_NE(row_table.data(0), NULLPTR);
-      ASSERT_NE(row_table.data(1), NULLPTR);
-      ASSERT_EQ(row_table.data(2), NULLPTR);
+      for (const auto& col : fixed_length_columns) {
+        const auto& dt = col->type();
+        SCOPED_TRACE("encoding fixed length column of type " + dt->ToString());
+        ASSERT_OK_AND_ASSIGN(auto row_table,
+                             MakeRowTableFromColumn(col, num_rows, dt->byte_width(),
+                                                    /*string_alignment=*/0));
+        ASSERT_NE(row_table.data(0), NULLPTR);
+        ASSERT_NE(row_table.data(1), NULLPTR);
+        ASSERT_EQ(row_table.data(2), NULLPTR);
 
-      int64_t actual_null_mask_size =
-          num_rows * row_table.metadata().null_masks_bytes_per_row;
-      ASSERT_LE(actual_null_mask_size, row_table.buffer_size(0) - padding_for_vectors);
-      ASSERT_GT(actual_null_mask_size * 2,
-                row_table.buffer_size(0) - padding_for_vectors);
+        int64_t actual_null_mask_size =
+            num_rows * row_table.metadata().null_masks_bytes_per_row;
+        ASSERT_LE(actual_null_mask_size, row_table.buffer_size(0) - padding_for_vectors);
+        ASSERT_GT(actual_null_mask_size * 2,
+                  row_table.buffer_size(0) - padding_for_vectors);
 
-      int64_t actual_rows_size = num_rows * uint32()->byte_width();
-      ASSERT_LE(actual_rows_size, row_table.buffer_size(1) - padding_for_vectors);
-      ASSERT_GT(actual_rows_size * 2, row_table.buffer_size(1) - padding_for_vectors);
+        int64_t actual_rows_size = num_rows * dt->byte_width();
+        ASSERT_LE(actual_rows_size, row_table.buffer_size(1) - padding_for_vectors);
+        ASSERT_GT(actual_rows_size * 2, row_table.buffer_size(1) - padding_for_vectors);
+      }
     }
 
     // Var length column.
@@ -114,7 +123,7 @@ TEST(RowTableMemoryConsumption, Encode) {
       ASSERT_GT(actual_null_mask_size * 2,
                 row_table.buffer_size(0) - padding_for_vectors);
 
-      int64_t actual_offset_size = num_rows * sizeof(uint32_t);
+      int64_t actual_offset_size = num_rows * sizeof(RowTableImpl::offset_type);
       ASSERT_LE(actual_offset_size, row_table.buffer_size(1) - padding_for_vectors);
       ASSERT_GT(actual_offset_size * 2, row_table.buffer_size(1) - padding_for_vectors);
 
@@ -123,6 +132,111 @@ TEST(RowTableMemoryConsumption, Encode) {
       ASSERT_GT(actual_rows_size * 2, row_table.buffer_size(2) - padding_for_vectors);
     }
   }
+}
+
+// GH-43495: Ensure that we can build a row table with more than 4GB row data.
+TEST(RowTableLarge, LARGE_MEMORY_TEST(Encode)) {
+  if constexpr (sizeof(void*) == 4) {
+    GTEST_SKIP() << "Test only works on 64-bit platforms";
+  }
+
+  // Use 9 512MB var-length rows to occupy more than 4GB memory.
+  constexpr int64_t num_rows = 9;
+  constexpr int64_t length_per_binary = 512 * 1024 * 1024;
+  constexpr int64_t row_alignment = sizeof(uint32_t);
+  constexpr int64_t var_length_alignment = sizeof(uint32_t);
+
+  MemoryPool* pool = default_memory_pool();
+
+  // The column to encode.
+  std::vector<KeyColumnArray> columns;
+  std::vector<Datum> values;
+  ASSERT_OK_AND_ASSIGN(
+      auto value, ::arrow::gen::Constant(
+                      std::make_shared<BinaryScalar>(std::string(length_per_binary, 'X')))
+                      ->Generate(1));
+  values.emplace_back(std::move(value));
+  ExecBatch batch = ExecBatch(std::move(values), 1);
+  ASSERT_OK(ColumnArraysFromExecBatch(batch, &columns));
+
+  // The row table.
+  std::vector<KeyColumnMetadata> column_metadatas;
+  ASSERT_OK(ColumnMetadatasFromExecBatch(batch, &column_metadatas));
+  RowTableMetadata table_metadata;
+  table_metadata.FromColumnMetadataVector(column_metadatas, row_alignment,
+                                          var_length_alignment);
+  RowTableImpl row_table;
+  ASSERT_OK(row_table.Init(pool, table_metadata));
+  RowTableEncoder row_encoder;
+  row_encoder.Init(column_metadatas, row_alignment, var_length_alignment);
+
+  // The rows to encode.
+  std::vector<uint16_t> row_ids(num_rows, 0);
+
+  // Encode num_rows rows.
+  row_encoder.PrepareEncodeSelected(0, num_rows, columns);
+  ASSERT_OK(row_encoder.EncodeSelected(&row_table, static_cast<uint32_t>(num_rows),
+                                       row_ids.data()));
+
+  auto encoded_row_length = table_metadata.fixed_length + length_per_binary;
+  ASSERT_EQ(row_table.offsets()[num_rows - 1], encoded_row_length * (num_rows - 1));
+  ASSERT_EQ(row_table.offsets()[num_rows], encoded_row_length * num_rows);
+}
+
+// GH-43495: Ensure that we can build a row table with more than 4GB row data.
+TEST(RowTableLarge, LARGE_MEMORY_TEST(AppendFrom)) {
+  if constexpr (sizeof(void*) == 4) {
+    GTEST_SKIP() << "Test only works on 64-bit platforms";
+  }
+
+  // Use 9 512MB var-length rows to occupy more than 4GB memory.
+  constexpr int64_t num_rows = 9;
+  constexpr int64_t length_per_binary = 512 * 1024 * 1024;
+  constexpr int64_t num_rows_seed = 1;
+  constexpr int64_t row_alignment = sizeof(uint32_t);
+  constexpr int64_t var_length_alignment = sizeof(uint32_t);
+
+  MemoryPool* pool = default_memory_pool();
+
+  // The column to encode.
+  std::vector<KeyColumnArray> columns;
+  std::vector<Datum> values;
+  ASSERT_OK_AND_ASSIGN(
+      auto value, ::arrow::gen::Constant(
+                      std::make_shared<BinaryScalar>(std::string(length_per_binary, 'X')))
+                      ->Generate(num_rows_seed));
+  values.push_back(std::move(value));
+  ExecBatch batch = ExecBatch(std::move(values), num_rows_seed);
+  ASSERT_OK(ColumnArraysFromExecBatch(batch, &columns));
+
+  // The seed row table.
+  std::vector<KeyColumnMetadata> column_metadatas;
+  ASSERT_OK(ColumnMetadatasFromExecBatch(batch, &column_metadatas));
+  RowTableMetadata table_metadata;
+  table_metadata.FromColumnMetadataVector(column_metadatas, row_alignment,
+                                          var_length_alignment);
+  RowTableImpl row_table_seed;
+  ASSERT_OK(row_table_seed.Init(pool, table_metadata));
+  RowTableEncoder row_encoder;
+  row_encoder.Init(column_metadatas, row_alignment, var_length_alignment);
+  row_encoder.PrepareEncodeSelected(0, num_rows_seed, columns);
+  std::vector<uint16_t> row_ids(num_rows_seed, 0);
+  ASSERT_OK(row_encoder.EncodeSelected(
+      &row_table_seed, static_cast<uint32_t>(num_rows_seed), row_ids.data()));
+
+  // The target row table.
+  RowTableImpl row_table;
+  ASSERT_OK(row_table.Init(pool, table_metadata));
+
+  // Append seed num_rows times.
+  for (int i = 0; i < num_rows; ++i) {
+    ASSERT_OK(row_table.AppendSelectionFrom(row_table_seed, num_rows_seed,
+                                            /*source_row_ids=*/NULLPTR));
+  }
+
+  auto encoded_row_length = table_metadata.fixed_length + length_per_binary;
+  ASSERT_EQ(row_table.offsets()[num_rows - 1], encoded_row_length * (num_rows - 1));
+  ASSERT_EQ(row_table.offsets()[num_rows], encoded_row_length * num_rows);
 }
 
 }  // namespace compute

@@ -138,7 +138,13 @@ inline R_xlen_t r_string_size(SEXP s) {
 }  // namespace unsafe
 
 inline SEXP utf8_strings(SEXP x) {
-  return cpp11::unwind_protect([x] {
+  return cpp11::unwind_protect([&] {
+    // ensure that x is not actually altrep first this also ensures that
+    // x is not altrep even after it is materialized
+    bool was_altrep = ALTREP(x);
+    if (was_altrep) {
+      x = PROTECT(Rf_duplicate(x));
+    }
     R_xlen_t n = XLENGTH(x);
 
     // if `x` is an altrep of some sort, this will
@@ -151,6 +157,9 @@ inline SEXP utf8_strings(SEXP x) {
       if (s != NA_STRING) {
         SET_STRING_ELT(x, i, Rf_mkCharCE(Rf_translateCharUTF8(s), CE_UTF8));
       }
+    }
+    if (was_altrep) {
+      UNPROTECT(1);
     }
     return x;
   });
@@ -378,9 +387,17 @@ SEXP to_r6(const std::shared_ptr<T>& ptr, const char* r6_class_name) {
   cpp11::external_pointer<std::shared_ptr<T>> xp(new std::shared_ptr<T>(ptr));
   SEXP r6_class = Rf_install(r6_class_name);
 
+// R_existsVarInFrame doesn't exist before R 4.2, so we need to fall back to
+// Rf_findVarInFrame3 if it is not defined.
+#if R_VERSION >= R_Version(4, 2, 0)
   if (!R_existsVarInFrame(arrow::r::ns::arrow, r6_class)) {
     cpp11::stop("No arrow R6 class named '%s'", r6_class_name);
   }
+#else
+  if (Rf_findVarInFrame3(arrow::r::ns::arrow, r6_class, FALSE) == R_UnboundValue) {
+    cpp11::stop("No arrow R6 class named '%s'", r6_class_name);
+  }
+#endif
 
   // make call:  <symbol>$new(<x>)
   SEXP call = PROTECT(Rf_lang3(R_DollarSymbol, r6_class, arrow::r::symbols::new_));

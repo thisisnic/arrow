@@ -33,9 +33,9 @@
 #include "arrow/compute/kernels/aggregate_internal.h"
 #include "arrow/compute/kernels/aggregate_var_std_internal.h"
 #include "arrow/compute/kernels/common_internal.h"
-#include "arrow/compute/kernels/row_encoder_internal.h"
 #include "arrow/compute/kernels/util_internal.h"
 #include "arrow/compute/row/grouper.h"
+#include "arrow/compute/row/row_encoder_internal.h"
 #include "arrow/record_batch.h"
 #include "arrow/stl_allocator.h"
 #include "arrow/type_traits.h"
@@ -2533,11 +2533,11 @@ struct GroupedCountDistinctImpl : public GroupedAggregator {
 struct GroupedDistinctImpl : public GroupedCountDistinctImpl {
   Result<Datum> Finalize() override {
     ARROW_ASSIGN_OR_RAISE(auto uniques, grouper_->GetUniques());
-    ARROW_ASSIGN_OR_RAISE(auto groupings, grouper_->MakeGroupings(
-                                              *uniques[1].array_as<UInt32Array>(),
-                                              static_cast<uint32_t>(num_groups_), ctx_));
     ARROW_ASSIGN_OR_RAISE(
-        auto list, grouper_->ApplyGroupings(*groupings, *uniques[0].make_array(), ctx_));
+        auto groupings, Grouper::MakeGroupings(*uniques[1].array_as<UInt32Array>(),
+                                               static_cast<uint32_t>(num_groups_), ctx_));
+    ARROW_ASSIGN_OR_RAISE(
+        auto list, Grouper::ApplyGroupings(*groupings, *uniques[0].make_array(), ctx_));
     const auto& values = list->values();
     DCHECK_EQ(values->offset(), 0);
     auto* offsets = list->value_offsets()->mutable_data_as<int32_t>();

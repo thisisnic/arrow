@@ -18,6 +18,7 @@ package file_test
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -26,16 +27,19 @@ import (
 	"path"
 	"testing"
 
-	"github.com/apache/arrow/go/v17/arrow/memory"
-	"github.com/apache/arrow/go/v17/internal/utils"
-	"github.com/apache/arrow/go/v17/parquet"
-	"github.com/apache/arrow/go/v17/parquet/compress"
-	"github.com/apache/arrow/go/v17/parquet/file"
-	"github.com/apache/arrow/go/v17/parquet/internal/encoding"
-	format "github.com/apache/arrow/go/v17/parquet/internal/gen-go/parquet"
-	"github.com/apache/arrow/go/v17/parquet/internal/thrift"
-	"github.com/apache/arrow/go/v17/parquet/metadata"
-	"github.com/apache/arrow/go/v17/parquet/schema"
+	"github.com/apache/arrow/go/v18/arrow"
+	"github.com/apache/arrow/go/v18/arrow/array"
+	"github.com/apache/arrow/go/v18/arrow/memory"
+	"github.com/apache/arrow/go/v18/internal/utils"
+	"github.com/apache/arrow/go/v18/parquet"
+	"github.com/apache/arrow/go/v18/parquet/compress"
+	"github.com/apache/arrow/go/v18/parquet/file"
+	"github.com/apache/arrow/go/v18/parquet/internal/encoding"
+	format "github.com/apache/arrow/go/v18/parquet/internal/gen-go/parquet"
+	"github.com/apache/arrow/go/v18/parquet/internal/thrift"
+	"github.com/apache/arrow/go/v18/parquet/metadata"
+	"github.com/apache/arrow/go/v18/parquet/pqarrow"
+	"github.com/apache/arrow/go/v18/parquet/schema"
 	libthrift "github.com/apache/thrift/lib/go/thrift"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -448,6 +452,55 @@ func TestRleBooleanEncodingFileRead(t *testing.T) {
 	assert.Equal(t, expected, values[:len(expected)])
 }
 
+type mockBadReader struct {
+	cnt    int
+	reader *os.File
+}
+
+func (m *mockBadReader) Seek(offset int64, whence int) (int64, error) {
+	return m.reader.Seek(offset, whence)
+}
+
+func (m *mockBadReader) ReadAt(p []byte, off int64) (n int, err error) {
+	if m.cnt == 0 {
+		return 0, fmt.Errorf("mock error")
+	}
+	m.cnt--
+	return m.reader.ReadAt(p, off)
+}
+
+func TestBadReader(t *testing.T) {
+	dir := os.Getenv("PARQUET_TEST_DATA")
+	if dir == "" {
+		t.Skip("no path supplied with PARQUET_TEST_DATA")
+	}
+	require.DirExists(t, dir)
+
+	filePath := path.Join(dir, "byte_stream_split_extended.gzip.parquet")
+	f, err := os.Open(filePath)
+	assert.NoError(t, err)
+	defer f.Close()
+
+	reader := &mockBadReader{
+		cnt:    2,
+		reader: f,
+	}
+	r, err := file.NewParquetReader(reader, file.WithReadProps(&parquet.ReaderProperties{
+		BufferSize:            int64(1024),
+		BufferedStreamEnabled: true,
+	}))
+	assert.NoError(t, err)
+
+	fileReader, err := pqarrow.NewFileReader(r, pqarrow.ArrowReadProperties{}, memory.DefaultAllocator)
+	assert.NoError(t, err)
+
+	columnReader, err := fileReader.GetColumn(context.Background(), 0)
+	assert.NoError(t, err)
+
+	_, err = columnReader.NextBatch(1)
+	assert.ErrorContains(t, err, "mock error") // Expect an error to occur.
+}
+
 func TestByteStreamSplitEncodingFileRead(t *testing.T) {
 	dir := os.Getenv("PARQUET_TEST_DATA")
 	if dir == "" {
@@ -581,4 +634,189 @@ func TestByteStreamSplitEncodingFileRead(t *testing.T) {
 			require.Equal(t, valuesPlain, valuesByteStreamSplit)
 		})
 	}
+}
+
+func TestDeltaBinaryPackedMultipleBatches(t *testing.T) {
+	size := 10
+	batchSize := size / 2 // write 2 batches
+
+	// Define the schema for the test data
+	fields := []arrow.Field{
+		{Name: "int64", Type: arrow.PrimitiveTypes.Int64, Nullable: true},
+	}
+	schema := arrow.NewSchema(fields, nil)
+
+	// Create a record batch with the test data
+	b := array.NewRecordBuilder(memory.DefaultAllocator, schema)
+	defer b.Release()
+
+	for i := 0; i < size; i++ {
+		b.Field(0).(*array.Int64Builder).Append(int64(i))
+	}
+	rec := b.NewRecord()
+	defer rec.Release()
+
+	// Write the data to Parquet using the file writer
+	props := parquet.NewWriterProperties(
+		parquet.WithDictionaryDefault(false),
+		parquet.WithEncoding(parquet.Encodings.DeltaBinaryPacked))
+	writerProps := pqarrow.DefaultWriterProps()
+
+	var buf bytes.Buffer
+	pw, err := pqarrow.NewFileWriter(schema, &buf, props, writerProps)
+	require.NoError(t, err)
+	require.NoError(t, pw.Write(rec))
+	require.NoError(t, pw.Close())
+
+	// Read the data back from the Parquet file
+	reader, err := file.NewParquetReader(bytes.NewReader(buf.Bytes()))
+	require.NoError(t, err)
+	defer reader.Close()
+
+	pr, err := pqarrow.NewFileReader(reader, pqarrow.ArrowReadProperties{BatchSize: int64(batchSize)}, memory.DefaultAllocator)
+	require.NoError(t, err)
+
+	rr, err := pr.GetRecordReader(context.Background(), nil, nil)
+	require.NoError(t, err)
+
+	totalRows := 0
+	for rr.Next() {
+		rec := rr.Record()
+		for i := 0; i < int(rec.NumRows()); i++ {
+			col := rec.Column(0).(*array.Int64)
+
+			val := col.Value(i)
+			require.Equal(t, val, int64(totalRows+i))
+		}
+		totalRows += int(rec.NumRows())
+	}
+
+	require.Equalf(t, size, totalRows, "Expected %d rows, but got %d rows", size, totalRows)
+}
+
+// Test read file lz4_raw_compressed.parquet
+// Contents documented at https://github.com/apache/parquet-testing/commit/ddd898958803cb89b7156c6350584d1cda0fe8de
+func TestLZ4RawFileRead(t *testing.T) {
+	dir := os.Getenv("PARQUET_TEST_DATA")
+	if dir == "" {
+		t.Skip("no path supplied with PARQUET_TEST_DATA")
+	}
+	require.DirExists(t, dir)
+
+	props := parquet.NewReaderProperties(memory.DefaultAllocator)
+	fileReader, err := file.OpenParquetFile(path.Join(dir, "lz4_raw_compressed.parquet"),
+		false, file.WithReadProps(props))
+	require.NoError(t, err)
+	defer fileReader.Close()
+
+	nRows := 4
+	nCols := 3
+	require.Equal(t, 1, fileReader.NumRowGroups())
+	rgr := fileReader.RowGroup(0)
+	require.EqualValues(t, nRows, rgr.NumRows())
+	require.EqualValues(t, nCols, rgr.NumColumns())
+
+	rdr, err := rgr.Column(0)
+	require.NoError(t, err)
+
+	rowsInt64, ok := rdr.(*file.Int64ColumnChunkReader)
+	require.True(t, ok)
+
+	valsInt64 := make([]int64, nRows)
+	total, read, err := rowsInt64.ReadBatch(int64(nRows), valsInt64, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(nRows), total)
+	require.Equal(t, nRows, read)
+
+	expectedValsInt64 := []int64{
+		1593604800,
+		1593604800,
+		1593604801,
+		1593604801,
+	}
+	require.Equal(t, expectedValsInt64, valsInt64)
+
+	rdr, err = rgr.Column(1)
+	require.NoError(t, err)
+
+	rowsByteArray, ok := rdr.(*file.ByteArrayColumnChunkReader)
+	require.True(t, ok)
+
+	valsByteArray := make([]parquet.ByteArray, nRows)
+	total, read, err = rowsByteArray.ReadBatch(int64(nRows), valsByteArray, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(nRows), total)
+	require.Equal(t, nRows, read)
+
+	expectedValsByteArray := []parquet.ByteArray{
+		[]byte("abc"),
+		[]byte("def"),
+		[]byte("abc"),
+		[]byte("def"),
+	}
+	require.Equal(t, expectedValsByteArray, valsByteArray)
+
+	rdr, err = rgr.Column(2)
+	require.NoError(t, err)
+
+	rowsFloat64, ok := rdr.(*file.Float64ColumnChunkReader)
+	require.True(t, ok)
+
+	valsFloat64 := make([]float64, nRows)
+	total, read, err = rowsFloat64.ReadBatch(int64(nRows), valsFloat64, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(nRows), total)
+	require.Equal(t, nRows, read)
+
+	expectedValsFloat64 := []float64{
+		42.0,
+		7.7,
+		42.125,
+		7.7,
+	}
+	require.Equal(t, expectedValsFloat64, valsFloat64)
+}
+
+// Test read file lz4_raw_compressed_larger.parquet
+// Contents documented at https://github.com/apache/parquet-testing/commit/ddd898958803cb89b7156c6350584d1cda0fe8de
+func TestLZ4RawLargerFileRead(t *testing.T) {
+	dir := os.Getenv("PARQUET_TEST_DATA")
+	if dir == "" {
+		t.Skip("no path supplied with PARQUET_TEST_DATA")
+	}
+	require.DirExists(t, dir)
+
+	props := parquet.NewReaderProperties(memory.DefaultAllocator)
+	fileReader, err := file.OpenParquetFile(path.Join(dir, "lz4_raw_compressed_larger.parquet"),
+		false, file.WithReadProps(props))
+	require.NoError(t, err)
+	defer fileReader.Close()
+
+	nRows := 10000
+	nCols := 1
+	require.Equal(t, 1, fileReader.NumRowGroups())
+	rgr := fileReader.RowGroup(0)
+	require.EqualValues(t, nRows, rgr.NumRows())
+	require.EqualValues(t, nCols, rgr.NumColumns())
+
+	rdr, err := rgr.Column(0)
+	require.NoError(t, err)
+
+	rows, ok := rdr.(*file.ByteArrayColumnChunkReader)
+	require.True(t, ok)
+
+	vals := make([]parquet.ByteArray, nRows)
+	total, read, err := rows.ReadBatch(int64(nRows), vals, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(nRows), total)
+	require.Equal(t, nRows, read)
+
+	expectedValsHead := []parquet.ByteArray{
+		[]byte("c7ce6bef-d5b0-4863-b199-8ea8c7fb117b"),
+		[]byte("e8fb9197-cb9f-4118-b67f-fbfa65f61843"),
+		[]byte("885136e1-0aa1-4fdb-8847-63d87b07c205"),
+		[]byte("ce7b2019-8ebe-4906-a74d-0afa2409e5df"),
+		[]byte("a9ee2527-821b-4b71-a926-03f73c3fc8b7"),
+	}
+	require.Equal(t, expectedValsHead, vals[:len(expectedValsHead)])
 }
