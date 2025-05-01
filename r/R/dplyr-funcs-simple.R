@@ -35,11 +35,20 @@
   # trunc is defined in dplyr-functions.R
 
   # trigonometric functions
-  "base::acos" = "acos_checked",
-  "base::asin" = "asin_checked",
   "base::cos" = "cos_checked",
   "base::sin" = "sin_checked",
   "base::tan" = "tan_checked",
+  "base::acos" = "acos_checked",
+  "base::asin" = "asin_checked",
+  "base::atan" = "atan",
+
+  # hyperbolic trigonometric functions
+  "base::cosh" = "cosh",
+  "base::sinh" = "sinh",
+  "base::tanh" = "tanh",
+  "base::acosh" = "acosh_checked",
+  "base::asinh" = "asinh",
+  "base::atanh" = "atanh_checked",
 
   # logical functions
   "!" = "invert",

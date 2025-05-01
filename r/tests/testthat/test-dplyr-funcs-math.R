@@ -315,6 +315,13 @@ test_that("trig functions", {
     df
   )
 
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = atan(x)) %>%
+      collect(),
+    df
+  )
+
   # with namespacing
   compare_dplyr_binding(
     .input %>%
@@ -323,11 +330,59 @@ test_that("trig functions", {
         b = base::cos(x),
         c = base::tan(x),
         d = base::asin(x),
-        e = base::acos(x)
+        e = base::acos(x),
+        f = base::atan(x),
       ) %>%
       collect(),
     df
   )
+})
+
+test_that("hyperbolic trig functions", {
+  df <- tibble(x = c(seq(from = 0, to = 10, by = 1), NA))
+
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = sinh(x)) %>%
+      collect(),
+    df
+  )
+
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = cosh(x)) %>%
+      collect(),
+    df
+  )
+
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = tanh(x)) %>%
+      collect(),
+    df
+  )
+
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = asinh(x)) %>%
+      collect(),
+    df
+  )
+
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = acosh(x)) %>%
+      collect(),
+    tibble::tibble(x = c(seq(from = 1, to = 10, by = 1), NA))
+  )
+
+  compare_dplyr_binding(
+    .input %>%
+      mutate(y = atanh(x)) %>%
+      collect(),
+    tibble::tibble(x = c(seq(from = -0.999999, to = 0.999999, by = 0.1), NA))
+  )
+
 })
 
 test_that("arith functions ", {
