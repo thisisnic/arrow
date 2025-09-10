@@ -39,7 +39,7 @@ file_template <- "# Licensed to the Apache Software Foundation (ASF) under one
 
 #' Functions available in Arrow dplyr queries
 #'
-#' The `arrow` package contains methods for %s `dplyr` table functions, many of
+#' The `arrow` package contains methods for %s `dplyr` and `tidyr` table functions, many of
 #' which are \"verbs\" that do transformations to one or more tables.
 #' The package also has mappings of %s R functions to the corresponding
 #' functions in the Arrow compute library. These allow you to write code inside
@@ -48,7 +48,7 @@ file_template <- "# Licensed to the Apache Software Foundation (ASF) under one
 #' on the Arrow query engine (Acero). This document lists all of the mapped
 #' functions.
 #'
-#' # `dplyr` verbs
+#' # `dplyr` and `tidyr` verbs
 #'
 #' Most verb functions return an `arrow_dplyr_query` object, similar in spirit
 #' to a `dbplyr::tbl_lazy`. This means that the verbs do not eagerly evaluate
@@ -179,7 +179,9 @@ dplyr_verbs <- c(
   tbl_vars = NULL
 )
 
-verb_bullets <- tibble::tibble(
+tidyr_verbs <- arrow:::supported_tidyr_methods
+
+dplyr_verb_bullets <- tibble::tibble(
   fun = names(dplyr_verbs),
   notes = dplyr_verbs
 ) %>%
@@ -191,10 +193,25 @@ verb_bullets <- tibble::tibble(
   transmute(render_fun(fun, pkg_fun, notes)) %>%
   pull()
 
+tidyr_verb_bullets <- tibble::tibble(
+  fun = names(tidyr_verbs),
+  notes = tidyr_verbs
+) %>%
+  mutate(
+    pkg_fun = paste0("tidyr::", fun),
+    notes = map_chr(notes, ~ paste(., collapse = " "))
+  ) %>%
+  arrange(fun) %>%
+  transmute(render_fun(fun, pkg_fun, notes)) %>%
+  pull()
+
+all_verbs <- c(dplyr_verbs, tidyr_verbs)
+verb_bullets <- c(dplyr_verb_bullets, tidyr_verb_bullets)
+
 writeLines(
   sprintf(
     file_template,
-    length(dplyr_verbs),
+    length(all_verbs),
     length(docs),
     paste("#'", verb_bullets, collapse = "\n"),
     length(arrow::list_compute_functions()),

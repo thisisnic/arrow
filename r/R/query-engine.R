@@ -138,6 +138,12 @@ ExecPlan <- R6Class("ExecPlan",
         # (as when we've done collapse() and not projected after) is avoided
         projection <- c(.data$selected_columns, .data$temp_columns)
         node <- node$Project(projection)
+        
+        # Apply pivot_longer transformation if specified
+        if (!is.null(.data$pivot_longer)) {
+          node <- node$PivotLonger(.data$pivot_longer)
+        }
+        
         if (!is.null(.data$join)) {
           right_node <- self$Build(.data$join$right_data)
 
@@ -307,6 +313,9 @@ ExecNode <- R6Class("ExecNode",
       # dplyr drops top-level attributes when you call summarize()
       out$extras$source_schema$metadata[["r"]]$attributes <- NULL
       out
+    },
+    PivotLonger = function(options) {
+      self$preserve_extras(ExecNode_PivotLonger(self, options))
     },
     Join = function(type, right_node, by, left_output, right_output, left_suffix, right_suffix, na_matches = TRUE) {
       self$preserve_extras(

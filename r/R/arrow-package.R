@@ -107,6 +107,13 @@ supported_dplyr_methods <- list(
   explain = NULL
 )
 
+supported_tidyr_methods <- list(
+  pivot_longer = c(
+    "All selected columns must have the same data type;",
+    "mixed types require casting to a common type before pivoting"
+  )
+)
+
 # This should be run at session exit and must be called
 # to avoid a segmentation fault at shutdown
 finalize_s3 <- function(env) {
@@ -124,6 +131,9 @@ s3_finalizer <- new.env(parent = emptyenv())
   for (cl in c("Dataset", "ArrowTabular", "RecordBatchReader", "arrow_dplyr_query")) {
     for (m in names(supported_dplyr_methods)) {
       s3_register(paste0("dplyr::", m), cl)
+    }
+    for (m in names(supported_tidyr_methods)) {
+      s3_register(paste0("tidyr::", m), cl)
     }
   }
   s3_register("dplyr::tbl_vars", "arrow_dplyr_query")
