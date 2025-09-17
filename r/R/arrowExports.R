@@ -492,6 +492,10 @@ ExecNode_Union <- function(input, right_data) {
   .Call(`_arrow_ExecNode_Union`, input, right_data)
 }
 
+ExecNode_PivotLonger <- function(input, options) {
+  .Call(`_arrow_ExecNode_PivotLonger`, input, options)
+}
+
 ExecNode_Fetch <- function(input, offset, limit) {
   .Call(`_arrow_ExecNode_Fetch`, input, offset, limit)
 }

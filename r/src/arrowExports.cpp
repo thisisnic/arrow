@@ -1203,6 +1203,22 @@ extern "C" SEXP _arrow_ExecNode_Union(SEXP input_sexp, SEXP right_data_sexp){
 
 // compute-exec.cpp
 #if defined(ARROW_R_WITH_ACERO)
+std::shared_ptr<acero::ExecNode> ExecNode_PivotLonger(const std::shared_ptr<acero::ExecNode>& input, cpp11::list options);
+extern "C" SEXP _arrow_ExecNode_PivotLonger(SEXP input_sexp, SEXP options_sexp){
+BEGIN_CPP11
+	arrow::r::Input<const std::shared_ptr<acero::ExecNode>&>::type input(input_sexp);
+	arrow::r::Input<cpp11::list>::type options(options_sexp);
+	return cpp11::as_sexp(ExecNode_PivotLonger(input, options));
+END_CPP11
+}
+#else
+extern "C" SEXP _arrow_ExecNode_PivotLonger(SEXP input_sexp, SEXP options_sexp){
+	Rf_error("Cannot call ExecNode_PivotLonger(). See https://arrow.apache.org/docs/r/articles/install.html for help installing Arrow C++ libraries. ");
+}
+#endif
+
+// compute-exec.cpp
+#if defined(ARROW_R_WITH_ACERO)
 std::shared_ptr<acero::ExecNode> ExecNode_Fetch(const std::shared_ptr<acero::ExecNode>& input, int64_t offset, int64_t limit);
 extern "C" SEXP _arrow_ExecNode_Fetch(SEXP input_sexp, SEXP offset_sexp, SEXP limit_sexp){
 BEGIN_CPP11
@@ -5820,6 +5836,7 @@ static const R_CallMethodDef CallEntries[] = {
 		{ "_arrow_ExecNode_Aggregate", (DL_FUNC) &_arrow_ExecNode_Aggregate, 3}, 
 		{ "_arrow_ExecNode_Join", (DL_FUNC) &_arrow_ExecNode_Join, 10}, 
 		{ "_arrow_ExecNode_Union", (DL_FUNC) &_arrow_ExecNode_Union, 2}, 
+		{ "_arrow_ExecNode_PivotLonger", (DL_FUNC) &_arrow_ExecNode_PivotLonger, 2}, 
 		{ "_arrow_ExecNode_Fetch", (DL_FUNC) &_arrow_ExecNode_Fetch, 3}, 
 		{ "_arrow_ExecNode_OrderBy", (DL_FUNC) &_arrow_ExecNode_OrderBy, 2}, 
 		{ "_arrow_ExecNode_SourceNode", (DL_FUNC) &_arrow_ExecNode_SourceNode, 2}, 
