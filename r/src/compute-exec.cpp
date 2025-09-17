@@ -455,6 +455,54 @@ std::shared_ptr<acero::ExecNode> ExecNode_Union(
   return MakeExecNodeOrStop("union", input->plan(), {input.get(), right_data.get()}, {});
 }
 
+// Convert R list to PivotLongerNodeOptions
+acero::PivotLongerNodeOptions convert_pivot_longer_options(cpp11::list r_options) {
+  acero::PivotLongerNodeOptions options;
+
+  // Extract feature field names using cpp11::as_cpp
+  options.feature_field_names = cpp11::as_cpp<std::vector<std::string>>(r_options["feature_field_names"]);
+
+  // Extract measurement field names using cpp11::as_cpp
+  options.measurement_field_names = cpp11::as_cpp<std::vector<std::string>>(r_options["measurement_field_names"]);
+
+  // Extract row templates
+  cpp11::list row_templates = r_options["row_templates"];
+  for (int i = 0; i < row_templates.size(); i++) {
+    cpp11::list r_template = row_templates[i];
+
+    // Feature values - convert directly to vector
+    auto feature_values = cpp11::as_cpp<std::vector<std::string>>(r_template["feature_values"]);
+
+    // Measurement values (FieldPath references)
+    std::vector<std::optional<arrow::FieldRef>> measurement_values_vec;
+    cpp11::list measurement_values = r_template["measurement_values"];
+    for (int j = 0; j < measurement_values.size(); j++) {
+      cpp11::list field_path = measurement_values[j];
+      cpp11::integers indices = field_path["indices"];
+
+      if (indices.size() > 0) {
+        auto cpp_indices = cpp11::as_cpp<std::vector<int>>(indices);
+        measurement_values_vec.emplace_back(arrow::FieldRef(cpp_indices));
+      } else {
+        measurement_values_vec.emplace_back(std::nullopt);
+      }
+    }
+
+    // Create template using constructor
+    options.row_templates.emplace_back(std::move(feature_values), std::move(measurement_values_vec));
+  }
+
+  return options;
+}
+
+// [[acero::export]]
+std::shared_ptr<acero::ExecNode> ExecNode_PivotLonger(
+    const std::shared_ptr<acero::ExecNode>& input,
+    cpp11::list options) {
+  auto cpp_options = convert_pivot_longer_options(options);
+  return MakeExecNodeOrStop("pivot_longer", input->plan(), {input.get()}, cpp_options);
+}
+
 // [[acero::export]]
 std::shared_ptr<acero::ExecNode> ExecNode_Fetch(
     const std::shared_ptr<acero::ExecNode>& input, int64_t offset, int64_t limit) {
