@@ -15,6 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+skip_if_not_installed("tidyr")
+
 test_that("pivot_wider works with basic case", {
   df <- data.frame(
     id = c(1, 1, 2, 2),
@@ -120,19 +122,14 @@ test_that("pivot_wider_spec works with basic spec", {
     stringsAsFactors = FALSE
   )
 
-  result <- df |>
-    arrow_table() |>
-    tidyr::pivot_wider_spec(spec = spec) |>
-    dplyr::collect() |>
-    dplyr::arrange(id)
-
-  expected <- data.frame(
-    id = c(1, 2),
-    height = c(10, 15),
-    width = c(20, 25)
+  compare_dplyr_binding(
+    .input %>%
+      tidyr::pivot_wider_spec(spec = spec) |>
+      dplyr::arrange(id) |>
+      collect(),
+    df
   )
 
-  expect_equal(as.data.frame(result), expected)
 })
 
 test_that("pivot_wider gives error for unsupported features", {
