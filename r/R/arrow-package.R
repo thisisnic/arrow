@@ -104,7 +104,16 @@ supported_dplyr_methods <- list(
   ),
   glimpse = NULL,
   show_query = NULL,
-  explain = NULL
+  explain = NULL,
+  pivot_wider = c(
+    "only supports single `names_from` and `values_from` columns;",
+    "does not support `values_fn`, `unused_fn`, `names_glue`, `names_sort`,",
+    "`names_vary != 'fastest'`, `names_expand`, or custom `names_repair`"
+  ),
+  pivot_wider_spec = c(
+    "does not support `values_fn` or `unused_fn`;",
+    "limited support for complex specifications"
+  )
 )
 
 # This should be run at session exit and must be called
@@ -127,6 +136,13 @@ s3_finalizer <- new.env(parent = emptyenv())
     }
   }
   s3_register("dplyr::tbl_vars", "arrow_dplyr_query")
+
+  # Register tidyr methods
+  for (cl in c("Dataset", "ArrowTabular", "RecordBatchReader", "arrow_dplyr_query")) {
+    s3_register("tidyr::pivot_wider", cl)
+    s3_register("tidyr::pivot_wider_spec", cl)
+  }
+
   s3_register("pillar::type_sum", "DataType")
 
   for (cl in c(
