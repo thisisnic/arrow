@@ -18,26 +18,14 @@
 skip_if_not_installed("tidyr")
 
 test_that("pivot_wider works with basic case", {
-  df <- data.frame(
-    id = c(1, 1, 2, 2),
-    name = c("height", "width", "height", "width"),
-    value = c(10, 20, 15, 25)
+
+  compare_dplyr_binding(
+    .input %>%
+      pivot_wider(names_from = station, values_from = seen) |>
+      collect(),
+    fish_encounters
   )
 
-  # Test with Arrow table
-  result <- df |>
-    arrow_table() |>
-    tidyr::pivot_wider(names_from = name, values_from = value) |>
-    dplyr::collect() |>
-    dplyr::arrange(id)
-
-  expected <- data.frame(
-    id = c(1, 2),
-    height = c(10, 15),
-    width = c(20, 25)
-  )
-
-  expect_equal(as.data.frame(result), expected)
 })
 
 test_that("pivot_wider works with names_prefix", {
