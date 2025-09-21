@@ -97,28 +97,116 @@ test_that("pivot_wider works with explicit id_cols", {
 })
 
 test_that("pivot_wider_spec works with basic spec", {
-  df <- data.frame(
-    id = c(1, 1, 2, 2),
-    name = c("height", "width", "height", "width"),
-    value = c(10, 20, 15, 25)
-  )
 
-  spec <- data.frame(
-    .name = c("height", "width"),
-    .value = c("value", "value"),
-    name = c("height", "width"),
-    stringsAsFactors = FALSE
+  spec <- tibble(
+    .name = c("income", "rent", "income_moe", "rent_moe"),
+    .value = c("estimate", "estimate", "moe", "moe"),
+    variable = c("income", "rent", "income", "rent")
   )
 
   compare_dplyr_binding(
-    .input %>%
-      tidyr::pivot_wider_spec(spec = spec) |>
-      dplyr::arrange(id) |>
+    .input |>
+      pivot_wider_spec(spec) |>
+      collect(),
+    us_rent_income
+  )
+
+})
+
+test_that("can pivot a manual spec with spec columns that don't identify any rows - from tidyr", {
+
+  # Looking for `x = 1L`
+  spec <- tibble(.name = "name", .value = "value", x = 1L)
+
+  # But that doesn't exist here...
+  df <- tibble(key = "a", value = 1L, x = 2L)
+
+  compare_dplyr_binding(
+    .input |>
+      pivot_wider_spec(spec, id_cols = key) |>
+      collect(),
+    df
+  )
+
+  # ...or here
+  df <- tibble(key = character(), value = integer(), x = integer())
+
+  compare_dplyr_binding(
+    .input |>
+      pivot_wider_spec(df, spec, id_cols = key) |>
       collect(),
     df
   )
 
 })
+
+
+
+test_that("pivoting with a manual spec and zero rows results in zero rows - from tidyr", {
+  spec <- tibble(.name = "name", .value = "value", x = 1L)
+
+  df <- tibble(value = integer(), x = integer())
+
+  compare_dplyr_binding(
+    .input |>
+      pivot_wider_spec(spec) |>
+      collect(),
+    df
+  )
+
+})
+
+
+
+test_that("`pivot_wider_spec()` requires empty dots", {
+
+  spec <- data.frame(
+    .name = c("x", "y", "z"),
+    .value = c("value", "value", "value"),
+    name = c("x", "y", "z")
+  )
+
+  expect_error(
+    df |>
+      arrow_table() |>
+      pivot_wider_spec(spec, 1),
+    "`...` must be empty"
+  )
+
+  expect_error(
+    df |>
+      arrow_table() |>
+      pivot_wider_spec(spec, name_repair = "check_unique"),
+    "`...` must be empty"
+  )
+
+})
+
+test_that("column order in output matches spec - from tidyr", {
+  # fmt: skip
+  df <- tribble(
+    ~hw,   ~name,  ~mark,   ~pr,
+    "hw1", "anna",    95,  "ok",
+    "hw2", "anna",    70, "meh",
+  )
+
+  # deliberately create weird order
+  # fmt: skip
+  sp <- tribble(
+    ~hw, ~.value, ~.name,
+    "hw1", "mark", "hw1_mark",
+    "hw1", "pr", "hw1_pr",
+    "hw2", "pr", "hw2_pr",
+    "hw2", "mark", "hw2_mark",
+  )
+
+  df |>
+    arrow_table() |>
+    pivot_wider_spec(sp)
+  expect_named(pv, c("name", sp$.name))
+})
+
+
 
 test_that("pivot_wider gives error for unsupported features", {
   df <- data.frame(
