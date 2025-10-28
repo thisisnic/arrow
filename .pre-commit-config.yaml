@@ -244,6 +244,7 @@ repos:
     rev: "v1.71.0"
     hooks:
       - id: rubocop
+        files: \.rb$
         name: Ruby Format
         alias: ruby
         args:
