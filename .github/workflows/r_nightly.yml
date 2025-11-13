@@ -129,9 +129,23 @@ jobs:
             recursive = TRUE
           )
           current_path <- c(current_pkg_path, current_lib_path)
+
+          # For libarrow files, extract platform from filename and create path
+          # Input: r-libarrow-darwin-arm64-openssl-1.1-22.0.0.100000056.zip
+          # Output: repo__libarrow__bin__darwin-arm64-openssl-1.1__arrow-22.0.0.100000056.zip
+          lib_files <- lapply(current_lib_path, function(path) {
+            filename <- basename(path)
+            # Extract platform: everything between "r-libarrow-" and the version number
+            # Pattern: r-libarrow-{platform}-{version}.zip
+            platform <- sub("^r-libarrow-(.+)-(\\d+\\.\\d+\\.\\d+\\.\\d+)\\.zip$", "\\1", filename)
+            version <- sub("^r-libarrow-(.+)-(\\d+\\.\\d+\\.\\d+\\.\\d+)\\.zip$", "\\2", filename)
+            new_filename <- paste0("arrow-", version, ".zip")
+            paste0(repo_root, "__libarrow__bin__", platform, "__", new_filename)
+          })
+
           files <- c(
             sub("r-pkg", repo_root, current_pkg_path),
-            sub("r-libarrow", paste0(repo_root, "__libarrow__r-libarrow"), current_lib_path)
+            unlist(lib_files)
           )
 
           # decode contrib.url from artifact name:
@@ -163,23 +177,13 @@ jobs:
           # find leaf sub dirs and store in array
           mapfile -t repo_dirs < <(find repo -type d -links 2)
 
-          # Old packages: repo/libarrow/bin/${TARGET}/arrow-${VERSION}.zip
+          # Packages: repo/libarrow/bin/${TARGET}/arrow-${VERSION}.zip
           #
           # We want to retain $keep (14) versions of each pkg/lib so we call
           # prune on each leaf dir and not on repo/.
           for dir in "${repo_dirs[@]}"; do
             prune "$dir"/arrow* || :
           done
-
-          # New packages: repo/libarrow/${TARGET}-arrow-${VERSION}.zip
-          prune repo/libarrow/r-libarrow-darwin-arm64-openssl-1.1-* || :
-          prune repo/libarrow/r-libarrow-darwin-arm64-openssl-3.0-* || :
-          prune repo/libarrow/r-libarrow-darwin-x86_64-openssl-1.1-* || :
-          prune repo/libarrow/r-libarrow-darwin-x86_64-openssl-3.0-* || :
-          prune repo/libarrow/r-libarrow-linux-x86_64-openssl-1.0-* || :
-          prune repo/libarrow/r-libarrow-linux-x86_64-openssl-1.1-* || :
-          prune repo/libarrow/r-libarrow-linux-x86_64-openssl-3.0-* || :
-          prune repo/libarrow/r-libarrow-windows-x86_64-* || :
       - name: Update Repository Index
         shell: Rscript {0}
         run: |
