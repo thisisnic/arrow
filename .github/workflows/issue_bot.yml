@@ -36,7 +36,7 @@ jobs:
       - uses: actions/github-script@v8
         with:
           script: |
-            let repo_moved_msg = component => `The ${component} implementation has moved to https://github.com/apache/arrow-${component}.` +
+            let repo_moved_msg = component => `The ${component} implementation has moved to https://github.com/apache/arrow-${component.toLowerCase}.` +
               "\nPlease close this one and open your issue there.";
 
             let split_body = context.payload.issue.body.split('### Component(s)');
