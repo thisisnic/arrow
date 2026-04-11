@@ -900,6 +900,10 @@ Utf8__initialize <- function() {
   .Call(`_arrow_Utf8__initialize`)
 }
 
+StringView__initialize <- function() {
+  .Call(`_arrow_StringView__initialize`)
+}
+
 LargeUtf8__initialize <- function() {
   .Call(`_arrow_LargeUtf8__initialize`)
 }
@@ -1248,14 +1252,6 @@ Field__Equals <- function(field, other, check_metadata) {
   .Call(`_arrow_Field__Equals`, field, other, check_metadata)
 }
 
-Field__nullable <- function(field) {
-  .Call(`_arrow_Field__nullable`, field)
-}
-
-Field__type <- function(field) {
-  .Call(`_arrow_Field__type`, field)
-}
-
 Field__HasMetadata <- function(field) {
   .Call(`_arrow_Field__HasMetadata`, field)
 }
@@ -1270,6 +1266,14 @@ Field__WithMetadata <- function(field, metadata) {
 
 Field__RemoveMetadata <- function(field) {
   .Call(`_arrow_Field__RemoveMetadata`, field)
+}
+
+Field__nullable <- function(field) {
+  .Call(`_arrow_Field__nullable`, field)
+}
+
+Field__type <- function(field) {
+  .Call(`_arrow_Field__type`, field)
 }
 
 fs___FileInfo__type <- function(x) {
@@ -2199,4 +2203,3 @@ SetIOThreadPoolCapacity <- function(threads) {
 Array__infer_type <- function(x) {
   .Call(`_arrow_Array__infer_type`, x)
 }
-
