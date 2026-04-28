@@ -60,21 +60,8 @@ jobs:
               return prefix_overrides[component] || component;
             };
 
-            let strip_component_prefixes = (title, prefixes) => {
-              let stripped_title = title.trimStart();
-              let prefix_removed = true;
-              while (prefix_removed) {
-                prefix_removed = false;
-                for (let prefix of prefixes) {
-                  let title_prefix = `[${prefix}]`;
-                  if (stripped_title.startsWith(title_prefix)) {
-                    stripped_title = stripped_title.substring(title_prefix.length).trimStart();
-                    prefix_removed = true;
-                    break;
-                  }
-                }
-              }
-              return stripped_title;
+            let title_has_prefix = (title, prefix) => {
+              return title.includes(`[${prefix}]`);
             };
 
             let split_body = context.payload.issue.body.split('### Component(s)');
@@ -133,23 +120,19 @@ jobs:
             let component_prefixes = component_labels.map(
               label => component_to_prefix(label.substring("Component: ".length))
             );
-            let repo_component_prefixes = repo_labels.data
-              .map(label => label.name)
-              .filter(label => label.startsWith("Component: "))
-              .map(label => component_to_prefix(label.substring("Component: ".length)));
-            let stripped_title = strip_component_prefixes(
-              context.payload.issue.title,
-              repo_component_prefixes
+            let issue_title = context.payload.issue.title.trimStart();
+            let missing_prefixes = component_prefixes.filter(
+              prefix => !title_has_prefix(issue_title, prefix)
             );
-            let prefixed_title = component_prefixes
+            let missing_title_prefix = missing_prefixes
               .map(prefix => `[${prefix}]`)
-              .join("") + " " + stripped_title;
-            if (prefixed_title != context.payload.issue.title) {
+              .join("");
+            if (missing_title_prefix) {
               await github.rest.issues.update({
                 "owner": context.repo.owner,
                 "repo": context.repo.repo,
                 "issue_number": context.payload.issue.number,
-                "title": prefixed_title,
+                "title": missing_title_prefix + " " + issue_title,
               });
             }
 
