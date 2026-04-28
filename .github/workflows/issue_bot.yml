@@ -51,6 +51,32 @@ jobs:
               `Thanks for your report! The ${component} implementation has moved to https://github.com/apache/${repo}.\n\n` +
               `This issue has been closed automatically - please open a new issue there.`;
 
+            let component_to_prefix = (component) => {
+              const prefix_overrides = {
+                "Continuous Integration": "CI",
+                "Developer Tools": "Dev",
+                "Documentation": "Docs",
+              };
+              return prefix_overrides[component] || component;
+            };
+
+            let strip_component_prefixes = (title, prefixes) => {
+              let stripped_title = title.trimStart();
+              let prefix_removed = true;
+              while (prefix_removed) {
+                prefix_removed = false;
+                for (let prefix of prefixes) {
+                  let title_prefix = `[${prefix}]`;
+                  if (stripped_title.startsWith(title_prefix)) {
+                    stripped_title = stripped_title.substring(title_prefix.length).trimStart();
+                    prefix_removed = true;
+                    break;
+                  }
+                }
+              }
+              return stripped_title;
+            };
+
             let split_body = context.payload.issue.body.split('### Component(s)');
             if (split_body.length != 2) throw new Error('No components found!');
 
@@ -103,6 +129,29 @@ jobs:
             );
 
             if (component_labels.length == 0) throw new Error('No components found!');
+
+            let component_prefixes = component_labels.map(
+              label => component_to_prefix(label.substring("Component: ".length))
+            );
+            let repo_component_prefixes = repo_labels.data
+              .map(label => label.name)
+              .filter(label => label.startsWith("Component: "))
+              .map(label => component_to_prefix(label.substring("Component: ".length)));
+            let stripped_title = strip_component_prefixes(
+              context.payload.issue.title,
+              repo_component_prefixes
+            );
+            let prefixed_title = component_prefixes
+              .map(prefix => `[${prefix}]`)
+              .join("") + " " + stripped_title;
+            if (prefixed_title != context.payload.issue.title) {
+              await github.rest.issues.update({
+                "owner": context.repo.owner,
+                "repo": context.repo.repo,
+                "issue_number": context.payload.issue.number,
+                "title": prefixed_title,
+              });
+            }
 
             await github.rest.issues.setLabels({
               "owner": context.repo.owner,
