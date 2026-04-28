@@ -128,11 +128,12 @@ jobs:
               .map(prefix => `[${prefix}]`)
               .join("");
             if (missing_title_prefix) {
+              let title_separator = issue_title.startsWith("[") ? "" : " ";
               await github.rest.issues.update({
                 "owner": context.repo.owner,
                 "repo": context.repo.repo,
                 "issue_number": context.payload.issue.number,
-                "title": missing_title_prefix + " " + issue_title,
+                "title": missing_title_prefix + title_separator + issue_title,
               });
             }
 
