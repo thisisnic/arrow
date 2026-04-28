@@ -242,6 +242,7 @@ tasks:
     artifacts:
       - r-libarrow-windows-x86_64-{no_rc_r_version}\.zip
       - r-libarrow-linux-x86_64-{no_rc_r_version}\.zip
+      - r-libarrow-linux-arm64-{no_rc_r_version}\.zip
       - r-libarrow-darwin-arm64-{no_rc_r_version}\.zip
       - r-libarrow-darwin-x86_64-{no_rc_r_version}\.zip
       - r-pkg__bin__windows__contrib__4.5__arrow_{no_rc_r_version}\.zip
