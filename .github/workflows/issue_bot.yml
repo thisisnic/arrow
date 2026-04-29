@@ -120,13 +120,17 @@ jobs:
             let component_prefixes = component_labels.map(
               label => component_to_prefix(label.substring("Component: ".length))
             );
+
             let issue_title = context.payload.issue.title.trimStart();
+
             let missing_prefixes = component_prefixes.filter(
               prefix => !title_has_prefix(issue_title, prefix)
             );
+
             let missing_title_prefix = missing_prefixes
               .map(prefix => `[${prefix}]`)
               .join("");
+
             if (missing_title_prefix) {
               let title_separator = issue_title.startsWith("[") ? "" : " ";
               await github.rest.issues.update({
