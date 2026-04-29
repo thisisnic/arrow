@@ -140,10 +140,10 @@ jobs:
           - envs:
               - R_IMAGE=r-base
               - R_ORG=rstudio
-              - R_TAG=4.4-jammy
+              - R_TAG=4.5-jammy
             image: r
             runs-on: ubuntu-latest
-            title: RStudio R-Base 4.4
+            title: RStudio R-Base 4.5
     env:
       ARCHERY_DEBUG: 1
       ARROW_ENABLE_TIMING_TESTS: OFF
