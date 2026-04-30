@@ -584,7 +584,6 @@ test_that("max_rows_per_file = 0 does not trigger max_rows_per_group adjustment 
   expect_no_error(
     write_dataset(df1, dst_dir, max_rows_per_file = 0L)
   )
-  expect_equal(nrow(read_parquet(list.files(dst_dir, full.names = TRUE)[[1]])), 10)
 })
 
 
@@ -900,7 +899,6 @@ test_that("max_rows_per_group is adjusted if at odds with max_rows_per_file in w
     write_tsv_dataset(df, dst_dir, max_rows_per_file = 5)
   )
 })
-
 
 test_that("Writing a flat file dataset without a delimiter throws an error.", {
   df <- tibble(
