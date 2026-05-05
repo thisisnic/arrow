@@ -22,8 +22,8 @@ These objects are imported from other packages. Follow the links
 below to see their documentation.
 
 \describe{
-  \item{bit64}{\code{\link[bit64:bit64-package]{print.integer64}}, \code{\link[bit64:bit64-package]{str.integer64}}}
+  \item{bit64}{\code{\link[bit64:print.integer64]{print.integer64()}}, \code{\link[bit64:str.integer64]{str.integer64()}}}
 
-  \item{tidyselect}{\code{\link[tidyselect]{all_of}}, \code{\link[tidyselect:starts_with]{contains}}, \code{\link[tidyselect:starts_with]{ends_with}}, \code{\link[tidyselect]{everything}}, \code{\link[tidyselect:everything]{last_col}}, \code{\link[tidyselect:starts_with]{matches}}, \code{\link[tidyselect:starts_with]{num_range}}, \code{\link[tidyselect]{one_of}}, \code{\link[tidyselect]{starts_with}}}
+  \item{tidyselect}{\code{\link[tidyselect:all_of]{all_of()}}, \code{\link[tidyselect:contains]{contains()}}, \code{\link[tidyselect:ends_with]{ends_with()}}, \code{\link[tidyselect:everything]{everything()}}, \code{\link[tidyselect:last_col]{last_col()}}, \code{\link[tidyselect:matches]{matches()}}, \code{\link[tidyselect:num_range]{num_range()}}, \code{\link[tidyselect:one_of]{one_of()}}, \code{\link[tidyselect:starts_with]{starts_with()}}}
 }}
 
