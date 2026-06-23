@@ -150,10 +150,6 @@ across_setup <- function(cols, fns, names, .caller_env, mask, inline = FALSE, ex
     fns <- call_args(fns)
   }
 
-  if (all(map_lgl(fns, is_call, name = "function"))) {
-    abort("Anonymous functions are not yet supported in Arrow")
-  }
-
   # make sure fns has names, use number to replace unnamed
   if (is.null(names(fns))) {
     names_fns <- seq_along(fns)
@@ -205,6 +201,25 @@ as_across_fn_call <- function(fn, var, quo_env) {
     expr <- f_rhs(fn)
     expr <- expr_substitute(expr, quote(.), sym(var))
     expr <- expr_substitute(expr, quote(.x), sym(var))
+    new_quosure(expr, quo_env)
+  } else if (is_call(fn, "function")) {
+    formals <- fn[[2]]
+    params <- names(formals)
+    body_expr <- fn[[3]]
+    # e.g. \(x, y = 1) x + y on col "a" becomes a + 1
+    expr <- body_expr
+    for (i in rev(seq_along(params)[-1])) {
+      default <- formals[[i]]
+      if (rlang::is_missing(default)) {
+        abort(
+          paste0('argument "', params[[i]], '" is missing, with no default')
+        )
+      }
+      # Replace extra param with its default value
+      expr <- expr_substitute(expr, sym(params[[i]]), default)
+    }
+    # Replace primary param with column name
+    expr <- expr_substitute(expr, sym(params[[1]]), sym(var))
     new_quosure(expr, quo_env)
   } else {
     fn_call <- call2(fn, sym(var))

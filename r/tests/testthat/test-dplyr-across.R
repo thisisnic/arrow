@@ -287,33 +287,59 @@ test_that("ARROW-14071 - R functions from a user's environment", {
   )
 })
 
-test_that("function(x)-style lambda functions are not supported", {
-  expect_error(
-    expand_across(
-      as_adq(example_data),
-      quos(across(
-        .cols = c(dbl, dbl2),
-        list(
-          function(x) {
-            head(x, 1)
-          },
-          function(x) {
-            head(x, 1)
-          }
-        )
-      ))
+test_that("function(x)-style anonymous functions are supported", {
+  # single anonymous function
+  expect_across_equal(
+    quos(across(c(dbl, dbl2), function(x) round(x, digits = 0))),
+    quos(
+      dbl = round(dbl, digits = 0),
+      dbl2 = round(dbl2, digits = 0)
     ),
-    regexp = "Anonymous functions are not yet supported in Arrow"
+    example_data
   )
 
-  expect_error(
-    expand_across(
-      as_adq(example_data),
-      quos(across(.cols = c(dbl, dbl2), function(x) {
-        head(x, 1)
-      }))
+  # single anonymous function with backslash syntax
+  expect_across_equal(
+    quos(across(c(dbl, dbl2), \(x) round(x, digits = 0))),
+    quos(
+      dbl = round(dbl, digits = 0),
+      dbl2 = round(dbl2, digits = 0)
     ),
-    regexp = "Anonymous functions are not yet supported in Arrow"
+    example_data
+  )
+
+  # list of anonymous functions
+  expect_across_equal(
+    quos(across(
+      .cols = c(dbl, dbl2),
+      list(
+        function(x) round(x, digits = 0),
+        function(x) x * 2
+      )
+    )),
+    quos(
+      dbl_1 = round(dbl, digits = 0),
+      dbl_2 = dbl * 2,
+      dbl2_1 = round(dbl2, digits = 0),
+      dbl2_2 = dbl2 * 2
+    ),
+    example_data
+  )
+
+  # anonymous function with braces
+  expect_across_equal(
+    quos(across(.cols = c(dbl, dbl2), function(x) {
+      round(x, digits = 0)
+    })),
+    quos(
+      dbl = {
+        round(dbl, digits = 0)
+      },
+      dbl2 = {
+        round(dbl2, digits = 0)
+      }
+    ),
+    example_data
   )
 })
 
@@ -328,5 +354,45 @@ test_that("if_all() and if_any() are supported", {
     quos(if_all(everything(), ~ is.na(.x))),
     quos(is.na(int) & is.na(dbl) & is.na(dbl2) & is.na(lgl) & is.na(false) & is.na(chr) & is.na(fct)),
     example_data
+  )
+})
+
+test_that("GH-43207 - anonymous functions in across() work end-to-end", {
+  df <- data.frame(
+    Participant = c("Greg", "Greg", "Donna", "Donna"),
+    Rating = c(21, NA, 17, NA)
+  )
+
+  compare_dplyr_binding(
+    .input |>
+      group_by(Participant) |>
+      summarize(across(matches("Rating"), \(x) max(x, na.rm = TRUE))) |>
+      arrange(Participant) |>
+      collect(),
+    df
+  )
+
+  compare_dplyr_binding(
+    .input |>
+      mutate(across(c(int, dbl), \(x) x + 1)) |>
+      collect(),
+    example_data
+  )
+
+  # anonymous function with default values for extra arguments
+  compare_dplyr_binding(
+    .input |>
+      mutate(across(c(dbl, dbl2), \(x, y = 1) x + y)) |>
+      collect(),
+    example_data
+  )
+
+  # anonymous function with missing required argument errors
+  expect_error(
+    expand_across(
+      as_adq(example_data),
+      quos(across(c(dbl, dbl2), \(x, y) x + y))
+    ),
+    regexp = "is missing, with no default"
   )
 })
