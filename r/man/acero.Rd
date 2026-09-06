@@ -137,7 +137,7 @@ Consider using the lubridate specialised parsing functions \code{ymd()}, \code{y
 \item \code{\link[base:floor]{floor()}}
 \item \code{\link[base:format]{format()}}
 \item \code{\link[base:grepl]{grepl()}}
-\item \code{\link[base:gsub]{gsub()}}: multiple replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
+\item \code{\link[base:gsub]{gsub()}}: multiple patterns or replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
 \item \code{\link[base:ifelse]{ifelse()}}
 \item \code{\link[base:is.character]{is.character()}}
 \item \code{\link[base:is.double]{is.double()}}
@@ -175,7 +175,7 @@ Consider using the lubridate specialised parsing functions \code{ymd()}, \code{y
 Valid values are "s", "ms" (default), "us", "ns".
 \item \code{\link[base:strrep]{strrep()}}
 \item \code{\link[base:strsplit]{strsplit()}}
-\item \code{\link[base:sub]{sub()}}: multiple replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
+\item \code{\link[base:sub]{sub()}}: multiple patterns or replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
 \item \code{\link[base:substr]{substr()}}: \code{start} and \code{stop} must be length 1
 \item \code{\link[base:substring]{substring()}}
 \item \code{\link[base:sum]{sum()}}
@@ -353,8 +353,8 @@ Pattern modifiers \code{coll()} and \code{boundary()} are not supported in any f
 \item \code{\link[stringr:str_pad]{str_pad()}}
 \item \code{\link[stringr:str_remove]{str_remove()}}: multiple patterns not supported; \code{pattern} must be a length 1 character vector
 \item \code{\link[stringr:str_remove_all]{str_remove_all()}}: multiple patterns not supported; \code{pattern} must be a length 1 character vector
-\item \code{\link[stringr:str_replace]{str_replace()}}: multiple replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
-\item \code{\link[stringr:str_replace_all]{str_replace_all()}}: multiple replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
+\item \code{\link[stringr:str_replace]{str_replace()}}: multiple patterns or replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
+\item \code{\link[stringr:str_replace_all]{str_replace_all()}}: multiple patterns or replacements not supported; \code{pattern} and \code{replacement} must be length 1 character vectors
 \item \code{\link[stringr:str_replace_na]{str_replace_na()}}
 \item \code{\link[stringr:str_split]{str_split()}}: Case-insensitive string splitting and splitting into 0 parts not supported
 \item \code{\link[stringr:str_starts]{str_starts()}}

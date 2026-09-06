@@ -363,7 +363,7 @@ register_bindings_string_regex <- function() {
     function(pattern, replacement, x, ignore.case = FALSE, fixed = FALSE) {
       if (length(pattern) != 1) {
         validation_error(
-          "Multiple replacements not supported: `pattern` must be a length 1 character vector"
+          "Multiple patterns not supported: `pattern` must be a length 1 character vector"
         )
       }
       if (length(replacement) != 1) {
@@ -412,7 +412,7 @@ register_bindings_string_regex <- function() {
   }
 
   replace_notes <- paste(
-    "multiple replacements not supported;",
+    "multiple patterns or replacements not supported;",
     "`pattern` and `replacement` must be length 1 character vectors"
   )
   remove_notes <- "multiple patterns not supported; `pattern` must be a length 1 character vector"

@@ -1586,3 +1586,22 @@ test_that("str_replace_na", {
     df
   )
 })
+
+test_that("GH-45314: multiple patterns or replacements give an informative error", {
+  x <- Expression$field_ref("x")
+
+  expect_error(
+    call_binding("str_replace_all", x, c("F" = "_", "b" = "")),
+    regexp = "Multiple patterns not supported: `pattern` must be a length 1 character vector"
+  )
+
+  expect_error(
+    call_binding("gsub", "o", c("u", "a"), x),
+    regexp = "Multiple replacements not supported: `replacement` must be a length 1 character vector"
+  )
+
+  expect_error(
+    call_binding("str_remove_all", x, c("F", "b")),
+    regexp = "Multiple patterns not supported: `pattern` must be a length 1 character vector"
+  )
+})

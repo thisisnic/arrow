@@ -148,7 +148,7 @@
 #' * [`floor()`][base::floor()]
 #' * [`format()`][base::format()]
 #' * [`grepl()`][base::grepl()]
-#' * [`gsub()`][base::gsub()]: multiple replacements not supported; `pattern` and `replacement` must be length 1 character vectors
+#' * [`gsub()`][base::gsub()]: multiple patterns or replacements not supported; `pattern` and `replacement` must be length 1 character vectors
 #' * [`ifelse()`][base::ifelse()]
 #' * [`is.character()`][base::is.character()]
 #' * [`is.double()`][base::is.double()]
@@ -186,7 +186,7 @@
 #' Valid values are "s", "ms" (default), "us", "ns".
 #' * [`strrep()`][base::strrep()]
 #' * [`strsplit()`][base::strsplit()]
-#' * [`sub()`][base::sub()]: multiple replacements not supported; `pattern` and `replacement` must be length 1 character vectors
+#' * [`sub()`][base::sub()]: multiple patterns or replacements not supported; `pattern` and `replacement` must be length 1 character vectors
 #' * [`substr()`][base::substr()]: `start` and `stop` must be length 1
 #' * [`substring()`][base::substring()]
 #' * [`sum()`][base::sum()]
@@ -346,8 +346,8 @@
 #' * [`str_pad()`][stringr::str_pad()]
 #' * [`str_remove()`][stringr::str_remove()]: multiple patterns not supported; `pattern` must be a length 1 character vector
 #' * [`str_remove_all()`][stringr::str_remove_all()]: multiple patterns not supported; `pattern` must be a length 1 character vector
-#' * [`str_replace()`][stringr::str_replace()]: multiple replacements not supported; `pattern` and `replacement` must be length 1 character vectors
-#' * [`str_replace_all()`][stringr::str_replace_all()]: multiple replacements not supported; `pattern` and `replacement` must be length 1 character vectors
+#' * [`str_replace()`][stringr::str_replace()]: multiple patterns or replacements not supported; `pattern` and `replacement` must be length 1 character vectors
+#' * [`str_replace_all()`][stringr::str_replace_all()]: multiple patterns or replacements not supported; `pattern` and `replacement` must be length 1 character vectors
 #' * [`str_replace_na()`][stringr::str_replace_na()]
 #' * [`str_split()`][stringr::str_split()]: Case-insensitive string splitting and splitting into 0 parts not supported
 #' * [`str_starts()`][stringr::str_starts()]
