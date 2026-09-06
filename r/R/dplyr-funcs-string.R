@@ -362,10 +362,14 @@ register_bindings_string_regex <- function() {
   arrow_r_string_replace_function <- function(max_replacements) {
     function(pattern, replacement, x, ignore.case = FALSE, fixed = FALSE) {
       if (length(pattern) != 1) {
-        validation_error("`pattern` must be a length 1 character vector")
+        validation_error(
+          "Multiple replacements not supported: `pattern` must be a length 1 character vector"
+        )
       }
       if (length(replacement) != 1) {
-        validation_error("`replacement` must be a length 1 character vector")
+        validation_error(
+          "Multiple replacements not supported: `replacement` must be a length 1 character vector"
+        )
       }
       Expression$create(
         ifelse(fixed && !ignore.case, "replace_substring", "replace_substring_regex"),
@@ -407,12 +411,34 @@ register_bindings_string_regex <- function() {
     }
   }
 
-  register_binding("base::sub", arrow_r_string_replace_function(1L))
-  register_binding("base::gsub", arrow_r_string_replace_function(-1L))
-  register_binding("stringr::str_replace", arrow_stringr_string_replace_function(1L))
-  register_binding("stringr::str_replace_all", arrow_stringr_string_replace_function(-1L))
-  register_binding("stringr::str_remove", arrow_stringr_string_remove_function(1L))
-  register_binding("stringr::str_remove_all", arrow_stringr_string_remove_function(-1L))
+  replace_notes <- paste(
+    "multiple replacements not supported;",
+    "`pattern` and `replacement` must be length 1 character vectors"
+  )
+  remove_notes <- "multiple patterns not supported; `pattern` must be a length 1 character vector"
+
+  register_binding("base::sub", arrow_r_string_replace_function(1L), notes = replace_notes)
+  register_binding("base::gsub", arrow_r_string_replace_function(-1L), notes = replace_notes)
+  register_binding(
+    "stringr::str_replace",
+    arrow_stringr_string_replace_function(1L),
+    notes = replace_notes
+  )
+  register_binding(
+    "stringr::str_replace_all",
+    arrow_stringr_string_replace_function(-1L),
+    notes = replace_notes
+  )
+  register_binding(
+    "stringr::str_remove",
+    arrow_stringr_string_remove_function(1L),
+    notes = remove_notes
+  )
+  register_binding(
+    "stringr::str_remove_all",
+    arrow_stringr_string_remove_function(-1L),
+    notes = remove_notes
+  )
 
   register_binding("stringr::str_replace_na", function(string, replacement = "NA") {
     if (!is.character(replacement) || length(replacement) != 1) {
