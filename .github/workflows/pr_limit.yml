@@ -43,7 +43,7 @@ env:
   # Maximum number of open pull requests per contributor without write
   # access. A pull request that takes the contributor over this limit is
   # closed with an explanatory comment.
-  PR_LIMIT: 3
+  PR_LIMIT: 1
 
 jobs:
   check:
@@ -53,7 +53,7 @@ jobs:
       # Always run the script from main, never from the PR head.
       - uses: actions/checkout@v7
         with:
-          repository: apache/arrow
+          repository: ${{ github.repository }}
           ref: main
           persist-credentials: false
 

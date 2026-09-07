@@ -106,10 +106,12 @@ module.exports = async ({github, context, core}) => {
     return;
   }
 
-  if (await hasWriteAccess(github, context, user.login)) {
-    core.info(`Skipping: ${user.login} has write access.`);
-    return;
-  }
+  // TEMPORARY (test branch only): write-access check bypassed so the fork
+  // owner can trigger the limit without a second account.
+  // if (await hasWriteAccess(github, context, user.login)) {
+  //   core.info(`Skipping: ${user.login} has write access.`);
+  //   return;
+  // }
 
   const count = await countOpenPullRequests(github, context, user.login);
   core.info(`${user.login} has ${count} open pull request(s); limit is ${limit}.`);
