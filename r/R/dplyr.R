@@ -142,6 +142,20 @@ print.arrow_dplyr_query <- function(x, ...) {
   cat(class(source_data(x))[1], " (query)\n", sep = "")
   cat(fields, "\n", sep = "")
   cat("\n")
+  print_query_operations(x)
+  cat("See $.data for the source Arrow object\n")
+  invisible(x)
+}
+
+# Print the operations (aggregations, filter, grouping, sorting) of a query.
+# Queries can be nested (e.g. after summarize() or a join, the previous query
+# becomes .data), so print the inner query's operations first, in the order
+# they will be evaluated.
+print_query_operations <- function(x) {
+  if (inherits(x$.data, "arrow_dplyr_query")) {
+    print_query_operations(x$.data)
+    cat("------\n")
+  }
   if (length(x$aggregations)) {
     cat("* Aggregations:\n")
     aggs <- paste0(names(x$aggregations), ": ", map_chr(x$aggregations, format_aggregation), collapse = "\n")
@@ -171,7 +185,6 @@ print.arrow_dplyr_query <- function(x, ...) {
       sep = ""
     )
   }
-  cat("See $.data for the source Arrow object\n")
   invisible(x)
 }
 

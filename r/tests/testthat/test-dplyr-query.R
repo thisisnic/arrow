@@ -761,3 +761,26 @@ test_that("nested field ref error handling", {
     "No match"
   )
 })
+
+test_that("Print method shows operations from nested queries", {
+  expect_output(
+    record_batch(tbl) |>
+      filter(dbl > 2) |>
+      group_by(chr) |>
+      summarize(int = sum(int)) |>
+      filter(int > 5) |>
+      print(),
+    'RecordBatch (query)
+chr: string
+int: int64
+
+* Aggregations:
+int: sum(int, {skip_nulls=false, min_count=0})
+* Filter: (dbl > 2)
+* Grouped by chr
+------
+* Filter: (int > 5)
+See $.data for the source Arrow object',
+    fixed = TRUE
+  )
+})
