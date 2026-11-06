@@ -63,9 +63,14 @@ function configure_binaries() {
   # We build aws-sdk-cpp bundled now, so the AWS libs are included in arrow_bundled_dependencies
   # but we also need to include these Windows system libraries
   AWS_LIBS="-luserenv -lversion -lws2_32 -lbcrypt -lwininet -lwinhttp -lsecur32 -lshlwapi -lncrypt"
-  # pkg-config --libs libcurl
-  GCS_LIBS="-lcurl -lnormaliz -lssh2 -lgdi32 -lssl -lcrypto -lcrypt32 -lwldap32 \
-            -lz -lws2_32 -lnghttp2 -ldbghelp"
+  # pkg-config --libs libcurl for the Rtools45 cURL (deduplicated), plus
+  # -ldbghelp for google-cloud-cpp. The Rtools Brotli libraries are left out
+  # on purpose: cURL's Brotli symbols come from the bundled Brotli in
+  # arrow_bundled_dependencies instead (GH-55165).
+  GCS_LIBS="-lcurl -lnghttp2 -lidn2 -lpsl -lunistring -liconv -lcharset -lssh2 \
+            -lgcrypt -lgpg-error -lssl -lcrypto -lz -lzstd \
+            -lnormaliz -lwldap32 -lsecur32 -lbcrypt -ladvapi32 -lcrypt32 -lgdi32 \
+            -lws2_32 -ldbghelp"
   # AZURE_LIBS="-lcurl -lssl -lxml2"
 
   # Set the right flags to point to and enable arrow/parquet
@@ -80,7 +85,8 @@ function configure_binaries() {
   fi
 
   # NOTE: If you make changes to the libraries below, you should also change
-  # ci/scripts/r_windows_build.sh and ci/scripts/PKGBUILD
+  # ci/scripts/r_windows_build.sh. snappy, utf8proc and re2 are built as part
+  # of arrow_bundled_dependencies and so aren't linked separately.
   PKG_CFLAGS="-I${RWINLIB}/include -DARROW_STATIC -DARROW_COMPUTE_STATIC -DPARQUET_STATIC \
               -DARROW_DS_STATIC -DARROW_ACERO_STATIC -DARROW_S3_STATIC -DARROW_GCS_STATIC \
               -DARROW_R_WITH_PARQUET -DARROW_R_WITH_COMPUTE -DARROW_R_WITH_ACERO \
@@ -90,8 +96,8 @@ function configure_binaries() {
   PKG_LIBS="$PKG_LIBS -L${RWINLIB}/lib"'$(R_ARCH)$(CRT) '
   PKG_LIBS="$PKG_LIBS -larrow_dataset -larrow_acero -lparquet -larrow_compute -larrow_s3 \
             -larrow_gcs -larrow -larrow_bundled_dependencies \
-            -lutf8proc -lsnappy -lz -lzstd -llz4 -lbz2 -lole32 \
-            ${MIMALLOC_LIBS} ${OPENSSL_LIBS} -lre2 ${AWS_LIBS} ${GCS_LIBS}" # ${AZURE_LIBS}
+            -lz -lzstd -llz4 -lbz2 -lole32 \
+            ${MIMALLOC_LIBS} ${OPENSSL_LIBS} ${AWS_LIBS} ${GCS_LIBS}" # ${AZURE_LIBS}
 
 }
 

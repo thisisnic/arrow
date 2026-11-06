@@ -18,6 +18,9 @@
 name: R
 
 on:
+  # TODO(GH-55398): remove before opening the PR. Only here so the Rtools45
+  # experiment can be re-run on a fork without pushing.
+  workflow_dispatch:
   push:
     branches:
       - '**'
@@ -205,7 +208,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - { rtools: 40, arch: 'ucrt64' }
+        - { rtools: 45, arch: 'ucrt64' }
     steps:
       - run: git config --global core.autocrlf false
       - name: Checkout Arrow
@@ -213,30 +216,18 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Setup ccache
-        shell: bash
-        run: |
-          ci/scripts/ccache_setup.sh
-          echo "CCACHE_DIR=$(cygpath --absolute --windows ccache)" >> $GITHUB_ENV
-      - name: Cache ccache
-        uses: actions/cache@v6
-        with:
-          path: ccache
-          key: r-${{ matrix.config.rtools }}-ccache-mingw-${{ matrix.config.arch }}-${{ hashFiles('cpp/src/**/*.cc','cpp/src/**/*.h)') }}-${{ github.run_id }}
-          restore-keys: |
-            r-${{ matrix.config.rtools }}-ccache-mingw-${{ matrix.config.arch }}-${{ hashFiles('cpp/src/**/*.cc','cpp/src/**/*.h)') }}-
-            r-${{ matrix.config.rtools }}-ccache-mingw-${{ matrix.config.arch }}-
+      # TODO(GH-55398): Rtools45 doesn't ship ccache, so there is no compiler
+      # cache for now. Consider sccache (see dev/tasks/r/github.packages.yml).
       - uses: r-lib/actions/setup-r@v2
         with:
-          # Note: we need Rtools40 here because Rtools40 + ucrt is how we build the Arrow C++
-          # static library. R itself is not used, but setup-r picks the Rtools version from
-          # r-version, and R 4.1 was the last R to use Rtools40, so this must stay at 4.1.
-          r-version: "4.1"
+          # R itself is not used here. setup-r picks the Rtools version from
+          # r-version, and we build the Arrow C++ static library with the same
+          # Rtools that R 4.5 and later use.
+          r-version: "4.5"
           Ncpus: 2
       - name: Build Arrow C++
         shell: bash
         env:
-          MINGW_ARCH: ${{ matrix.config.arch }}
           RTOOLS_VERSION: ${{ matrix.config.rtools }}
         run: ci/scripts/r_windows_build.sh
       - name: Rename libarrow.zip
@@ -290,7 +281,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
-          name: libarrow-rtools40-ucrt64.zip
+          name: libarrow-rtools45-ucrt64.zip
           path: r/windows
       - name: Unzip and rezip libarrows
         shell: bash
