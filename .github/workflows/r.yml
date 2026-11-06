@@ -250,6 +250,10 @@ jobs:
       matrix:
         config:
         - { rversion: "release" }
+        # TODO(GH-55398): temporary, to check that an Rtools45-built libarrow
+        # links with the older Rtools that R 4.3 and 4.4 use.
+        - { rversion: "4.4" }
+        - { rversion: "4.3" }
 
     env:
       ARROW_R_CXXFLAGS: "-Werror"
