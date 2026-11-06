@@ -82,6 +82,14 @@ pushd "${CPP_BUILD_DIR}"
 # abseil and protobuf are bundled explicitly because Rtools45 ships older
 # versions (20250127 and 29.5) than Arrow's bundled google-cloud-cpp expects,
 # and with CMAKE_PREFIX_PATH set, AUTO would otherwise pick them up.
+# ARROW_USE_STD_CHRONO=0 keeps the vendored date library for time zones
+# instead of C++20 std::chrono, which Arrow otherwise selects on Windows with
+# gcc 14's libstdc++ (GH-48593). The R package supplies the time zone database
+# through the tzdb package via the vendored library's set_install(), which
+# std::chrono ignores; libstdc++ 14 also can't format zoned_time<days> and has
+# a DST bug (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=116110). This is
+# the same behaviour the Rtools40 (gcc 8) build had.
+#
 # Brotli is bundled because the Rtools45 Brotli (1.2.0) predates the
 # security fix in 1.2.1 (GH-55165). The Rtools45 cURL is built against
 # Brotli too, so we deliberately don't ship or link the Rtools Brotli; cURL's
@@ -95,6 +103,7 @@ cmake \
   -DARROW_BUILD_STATIC=ON \
   -DARROW_BUILD_UTILITIES=OFF \
   -DARROW_COMPUTE=ON \
+  -DARROW_CXXFLAGS="-DARROW_USE_STD_CHRONO=0" \
   -DARROW_CSV=ON \
   -DARROW_DATASET=ON \
   -DARROW_FILESYSTEM=ON \

@@ -274,8 +274,9 @@ jobs:
       - name: Download Timezone Database
         shell: bash
         run: |
-          # RTools 40 uses GCC 8.x which does not support C++20 chrono timezones,
-          # so Arrow uses the vendored date library which requires tzdata
+          # The R libarrow is built with ARROW_USE_STD_CHRONO=0 (see
+          # ci/scripts/r_windows_build.sh), so Arrow uses the vendored date
+          # library, which requires tzdata
           ci/scripts/download_tz_database.sh
       - run: mkdir r/windows
       - name: Download artifacts
