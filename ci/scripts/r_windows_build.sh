@@ -55,6 +55,8 @@ g++ --version
 cmake --version
 make --version | head -n 1
 ls "${TOOLCHAIN}/lib"
+# What this Rtools' cURL needs; GCS_LIBS in r/configure.win must match
+cat "${TOOLCHAIN}/lib/pkgconfig/libcurl.pc"
 
 # We use static cURL in google-cloud-cpp. If we can use cURL's CMake
 # package, we don't need to specify CURL_STATICLIB explicitly. But
