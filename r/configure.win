@@ -63,14 +63,6 @@ function configure_binaries() {
   # We build aws-sdk-cpp bundled now, so the AWS libs are included in arrow_bundled_dependencies
   # but we also need to include these Windows system libraries
   AWS_LIBS="-luserenv -lversion -lws2_32 -lbcrypt -lwininet -lwinhttp -lsecur32 -lshlwapi -lncrypt"
-  # pkg-config --libs libcurl for the Rtools45 cURL (deduplicated), plus
-  # -ldbghelp for google-cloud-cpp. The Rtools Brotli libraries are left out
-  # on purpose: cURL's Brotli symbols come from the bundled Brotli in
-  # arrow_bundled_dependencies instead (GH-55165).
-  GCS_LIBS="-lcurl -lnghttp2 -lidn2 -lpsl -lunistring -liconv -lcharset -lssh2 \
-            -lgcrypt -lgpg-error -lssl -lcrypto -lz -lzstd \
-            -lnormaliz -lwldap32 -lsecur32 -lbcrypt -ladvapi32 -lcrypt32 -lgdi32 \
-            -lws2_32 -ldbghelp"
   # AZURE_LIBS="-lcurl -lssl -lxml2"
 
   # Set the right flags to point to and enable arrow/parquet
@@ -83,6 +75,20 @@ function configure_binaries() {
     # with the highest version:
     RWINLIB="../windows/$(ls windows/ | grep ^r-libarrow- | tail -n 1)"
   fi
+
+  # cURL's link dependencies depend on which Rtools built the libarrow zip,
+  # so ci/scripts/r_windows_build.sh records them in the zip. -ldbghelp is for
+  # google-cloud-cpp. The Rtools Brotli libraries are never included: cURL's
+  # Brotli symbols come from the bundled Brotli in arrow_bundled_dependencies
+  # (GH-55165). Zips built before this file existed also lack the bundled
+  # snappy, utf8proc and re2 this version links against, so they can't be used.
+  CURL_LIBS_FILE="${RWINLIB#../}/lib/x64-ucrt/libcurl.libs"
+  if [ ! -f "${CURL_LIBS_FILE}" ]; then
+    echo "*** ${CURL_LIBS_FILE} not found: the libarrow zip is too old for this version of the R package"
+    _LIBARROW_FOUND="false"
+    return 0
+  fi
+  GCS_LIBS="$(cat "${CURL_LIBS_FILE}") -ldbghelp"
 
   # NOTE: If you make changes to the libraries below, you should also change
   # ci/scripts/r_windows_build.sh. snappy, utf8proc and re2 are built as part

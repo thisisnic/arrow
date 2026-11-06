@@ -55,7 +55,7 @@ g++ --version
 cmake --version
 make --version | head -n 1
 ls "${TOOLCHAIN}/lib"
-# What this Rtools' cURL needs; GCS_LIBS in r/configure.win must match
+# Logged for debugging; parsed below to generate libcurl.libs for r/configure.win
 cat "${TOOLCHAIN}/lib/pkgconfig/libcurl.pc"
 
 # We use static cURL in google-cloud-cpp. If we can use cURL's CMake
@@ -162,14 +162,44 @@ cp -r install/include "${DST_DIR}/include"
 cp install/lib/*.a "${DST_DIR}/lib/x64-ucrt/"
 
 # Rtools libraries that r/configure.win links against. Users compiling the R
-# package have the same Rtools, but ship them so the zip is self-contained.
-# Keep in sync with PKG_LIBS and GCS_LIBS in r/configure.win. Brotli is
-# intentionally absent: see the Brotli comment above.
-for lib in z zstd lz4 bz2 \
-  crypto ssl curl nghttp2 idn2 psl unistring iconv charset \
-  ssh2 gcrypt gpg-error; do
+# package have an Rtools with these too, but ship them so the zip is
+# self-contained. Keep in sync with PKG_LIBS in r/configure.win.
+for lib in z zstd lz4 bz2 crypto ssl curl; do
   cp "${TOOLCHAIN}/lib/lib${lib}.a" "${DST_DIR}/lib/x64-ucrt/"
 done
+
+# cURL's link dependencies differ between Rtools versions (e.g. Rtools43's
+# cURL has no nghttp2 or libpsl, Rtools45's does), so derive them from this
+# toolchain's libcurl.pc, ship the ones that are toolchain libraries, and
+# record the flags in the zip for r/configure.win to use as GCS_LIBS.
+# Brotli is skipped: see the Brotli comment above. Windows system libraries
+# (ws2_32, crypt32, ...) are kept in the flags but aren't ours to ship.
+CURL_LIBS=""
+while read -r flag; do
+  lib="${flag#-l}"
+  case "${lib}" in
+    brotli*) continue ;;
+    curl | z | zstd | ssl | crypto) ;; # already copied above
+    # Windows system and mingw runtime import libraries: link flag only
+    ws2_32 | bcrypt | advapi32 | crypt32 | gdi32 | wldap32 | secur32 | normaliz | pthread | m) ;;
+    *)
+      if [ -f "${TOOLCHAIN}/lib/lib${lib}.a" ]; then
+        cp "${TOOLCHAIN}/lib/lib${lib}.a" "${DST_DIR}/lib/x64-ucrt/"
+      fi
+      ;;
+  esac
+  CURL_LIBS="${CURL_LIBS} ${flag}"
+done < <(grep -E '^Libs(\.private)?:' "${TOOLCHAIN}/lib/pkgconfig/libcurl.pc" |
+  grep -o -E '\-l[A-Za-z0-9_+.-]+' | awk '!seen[$0]++')
+case " ${CURL_LIBS} " in
+  *" -lcurl "*) ;;
+  *)
+    echo "Failed to parse link flags from ${TOOLCHAIN}/lib/pkgconfig/libcurl.pc" >&2
+    exit 1
+    ;;
+esac
+echo "${CURL_LIBS}" >"${DST_DIR}/lib/x64-ucrt/libcurl.libs"
+cat "${DST_DIR}/lib/x64-ucrt/libcurl.libs"
 ls -la "${DST_DIR}/lib/x64-ucrt"
 
 # Create build artifact
