@@ -208,9 +208,10 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        # TODO(GH-55398): experimenting with the oldest Rtools whose gcc meets
-        # Arrow's minimum (gcc 12), so the zip links on R 4.3 and later.
-        - { rtools: 43, arch: 'ucrt64' }
+        # TODO(GH-55398): experimenting with the oldest MXE-based Rtools. Its
+        # gcc 10 is the same generation Rtools40 built with, so the zip should
+        # link on every Rtools from 42 up (R 4.2 and later).
+        - { rtools: 42, arch: 'ucrt64' }
     steps:
       - run: git config --global core.autocrlf false
       - name: Checkout Arrow
@@ -223,8 +224,8 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           # R itself is not used here. setup-r picks the Rtools version from
-          # r-version: R 4.3 gets Rtools43.
-          r-version: "4.3"
+          # r-version: R 4.2 gets Rtools42.
+          r-version: "4.2"
           Ncpus: 2
       - name: Build Arrow C++
         shell: bash
@@ -255,6 +256,7 @@ jobs:
         # links with the older Rtools that R 4.3 and 4.4 use.
         - { rversion: "4.4" }
         - { rversion: "4.3" }
+        - { rversion: "4.2" }
 
     env:
       ARROW_R_CXXFLAGS: "-Werror"
@@ -287,7 +289,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
-          name: libarrow-rtools43-ucrt64.zip
+          name: libarrow-rtools42-ucrt64.zip
           path: r/windows
       - name: Unzip and rezip libarrows
         shell: bash

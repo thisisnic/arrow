@@ -49,10 +49,17 @@ CPP_BUILD_DIR="${BUILD_DIR}/cpp"
 INSTALL_DIR="${BUILD_DIR}/install"
 INSTALL_DIR_WIN="$(cygpath -am "${INSTALL_DIR}")"
 
+# Prefer the CMake installed on the runner (as the old PKGBUILD did): the
+# CMake inside older Rtools toolchains can predate Arrow's minimum (3.25).
+CMAKE="cmake"
+if [ -x "${PROGRAMFILES}/CMake/bin/cmake.exe" ]; then
+  CMAKE="${PROGRAMFILES}/CMake/bin/cmake.exe"
+fi
+
 printenv
 gcc --version
 g++ --version
-cmake --version
+"${CMAKE}" --version
 make --version | head -n 1
 ls "${TOOLCHAIN}/lib"
 # Logged for debugging; parsed below to generate libcurl.libs for r/configure.win
@@ -96,7 +103,7 @@ pushd "${CPP_BUILD_DIR}"
 # security fix in 1.2.1 (GH-55165). The Rtools45 cURL is built against
 # Brotli too, so we deliberately don't ship or link the Rtools Brotli; cURL's
 # Brotli symbols resolve from the bundled copy in arrow_bundled_dependencies.
-cmake \
+"${CMAKE}" \
   "$(cygpath -am "${ARROW_HOME}/cpp")" \
   -G "MSYS Makefiles" \
   -DARROW_ACERO=ON \
