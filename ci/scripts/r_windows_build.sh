@@ -172,16 +172,23 @@ done
 # cURL has no nghttp2 or libpsl, Rtools45's does), so derive them from this
 # toolchain's libcurl.pc, ship the ones that are toolchain libraries, and
 # record the flags in the zip for r/configure.win to use as GCS_LIBS.
-# Brotli is skipped: see the Brotli comment above. Windows system libraries
-# (ws2_32, crypt32, ...) are kept in the flags but aren't ours to ship.
+# Brotli is skipped: see the Brotli comment above. Windows system and mingw
+# runtime import libraries (ws2_32, crypt32, ...) aren't ours to ship, and
+# they are written after all the toolchain libraries: with static linking
+# every library that needs Winsock etc. must come before -lws2_32, and
+# pkg-config's own ordering doesn't guarantee that (Rtools43's libcurl.pc
+# lists -lcrypto after the last -lws2_32).
 CURL_LIBS=""
+CURL_SYS_LIBS=""
 while read -r flag; do
   lib="${flag#-l}"
   case "${lib}" in
     brotli*) continue ;;
+    ws2_32 | bcrypt | advapi32 | crypt32 | gdi32 | wldap32 | secur32 | normaliz | pthread | m)
+      CURL_SYS_LIBS="${CURL_SYS_LIBS} ${flag}"
+      continue
+      ;;
     curl | z | zstd | ssl | crypto) ;; # already copied above
-    # Windows system and mingw runtime import libraries: link flag only
-    ws2_32 | bcrypt | advapi32 | crypt32 | gdi32 | wldap32 | secur32 | normaliz | pthread | m) ;;
     *)
       if [ -f "${TOOLCHAIN}/lib/lib${lib}.a" ]; then
         cp "${TOOLCHAIN}/lib/lib${lib}.a" "${DST_DIR}/lib/x64-ucrt/"
@@ -198,7 +205,7 @@ case " ${CURL_LIBS} " in
     exit 1
     ;;
 esac
-echo "${CURL_LIBS}" >"${DST_DIR}/lib/x64-ucrt/libcurl.libs"
+echo "${CURL_LIBS}${CURL_SYS_LIBS}" >"${DST_DIR}/lib/x64-ucrt/libcurl.libs"
 cat "${DST_DIR}/lib/x64-ucrt/libcurl.libs"
 ls -la "${DST_DIR}/lib/x64-ucrt"
 
