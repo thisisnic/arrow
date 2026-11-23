@@ -44,7 +44,8 @@ jobs:
           mkdir -p ci-scripts out
           sha=95c2fb75626e411ce20111b2139d517675084d6e
           for f in install_minio.sh install_gcs_testbench.sh; do
-            curl -fsSL -o "ci-scripts/$f" "https://raw.githubusercontent.com/apache/arrow/$sha/ci/scripts/$f"
+            curl -fsSL --retry 6 --retry-delay 5 --retry-all-errors \
+              -o "ci-scripts/$f" "https://raw.githubusercontent.com/apache/arrow/$sha/ci/scripts/$f"
           done
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Install MinIO
