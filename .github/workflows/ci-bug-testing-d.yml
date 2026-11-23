@@ -19,10 +19,13 @@ permissions:
 
 jobs:
   macos:
-    name: macOS 26 arm64, ${{ matrix.config }}
+    name: macOS 15 arm64, ${{ matrix.config }}
     # Never run in apache/arrow itself.
     if: github.repository != 'apache/arrow'
-    runs-on: macos-26
+    # macos-26 jobs sat in the queue for 15 minutes and were cancelled without
+    # ever getting a runner, three times in a row, so this uses macos-15
+    # (also arm64).
+    runs-on: macos-15
     timeout-minutes: 150
     strategy:
       fail-fast: false
