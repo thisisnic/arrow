@@ -1,0 +1,146 @@
+# Batch C of the CI bug testing in a personal fork: one Windows MSVC build of
+# Arrow C++, based on apache/arrow's cpp_windows.yml, with three Windows-only
+# test skips removed on this branch so the tests actually run:
+#   GH-47490  Substrait.ExecReadRelWithLocalFiles
+#   GH-33861  Substrait.ReadRelWithGlobFiles
+#   GH-47442  AssertTestWithinUlp.Basics
+# The build uses ARROW_SIMD_LEVEL=SSE4_2 so the compiler flag from GH-50527
+# is passed. Test failures in this job are the result, not a problem.
+# All of Arrow's own workflows are deleted on this branch so only this runs.
+
+name: CI bug testing C (Windows MSVC)
+
+on:
+  push:
+    branches:
+      - 'ci-bug-testing/**'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows 2022 MSVC, skips removed
+    # Never run in apache/arrow itself.
+    if: github.repository != 'apache/arrow'
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      ARROW_AZURE: ON
+      ARROW_BOOST_USE_SHARED: OFF
+      ARROW_BUILD_BENCHMARKS: OFF
+      ARROW_BUILD_SHARED: ON
+      ARROW_BUILD_STATIC: ON
+      ARROW_BUILD_TESTS: ON
+      ARROW_DATASET: ON
+      ARROW_FILESYSTEM: ON
+      ARROW_FLIGHT: OFF
+      ARROW_HDFS: ON
+      ARROW_HOME: /usr
+      ARROW_JEMALLOC: OFF
+      ARROW_MIMALLOC: ON
+      ARROW_ORC: ON
+      ARROW_PARQUET: ON
+      ARROW_SIMD_LEVEL: SSE4_2
+      ARROW_SUBSTRAIT: ON
+      ARROW_USE_GLOG: OFF
+      ARROW_VERBOSE_THIRDPARTY_BUILD: OFF
+      ARROW_WITH_BROTLI: OFF
+      ARROW_WITH_BZ2: OFF
+      ARROW_WITH_LZ4: OFF
+      ARROW_WITH_OPENTELEMETRY: OFF
+      ARROW_WITH_SNAPPY: ON
+      ARROW_WITH_ZLIB: ON
+      ARROW_WITH_ZSTD: ON
+      BOOST_SOURCE: BUNDLED
+      CMAKE_CXX_STANDARD: "20"
+      CMAKE_GENERATOR: Ninja
+      CMAKE_INSTALL_PREFIX: /usr
+      CMAKE_MSVC_DEBUG_INFORMATION_FORMAT: Embedded
+      CMAKE_UNITY_BUILD: ON
+    steps:
+      - name: Disable Crash Dialogs
+        run: |
+          reg add `
+            "HKCU\SOFTWARE\Microsoft\Windows\Windows Error Reporting" `
+            /v DontShowUI `
+            /t REG_DWORD `
+            /d 1 `
+            /f
+      - name: Checkout Arrow
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          submodules: recursive
+      - name: Install msys2 (for tzdata for ORC tests)
+        uses: msys2/setup-msys2@v2
+        id: setup-msys2
+      - name: Install cmake
+        shell: bash
+        run: |
+          ci/scripts/install_cmake.sh 4.1.2 /usr
+      - name: Install ccache
+        shell: bash
+        run: |
+          ci/scripts/install_ccache.sh 4.13.6 /usr
+      - name: Setup ccache
+        shell: bash
+        run: |
+          ci/scripts/ccache_setup.sh
+      - name: Find Visual Studio
+        shell: pwsh
+        run: |
+          "VS_INSTALL_PATH=$(vswhere -latest -property installationPath)" >> $env:GITHUB_ENV
+      - name: Build
+        shell: cmd
+        env:
+          VCVARS_ARCH: x64
+        run: |
+          call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
+          bash -c "ci/scripts/cpp_build.sh $(pwd) $(pwd)/build 2>&1 | tee build.log; exit ${PIPESTATUS[0]}"
+      - name: Compiler warnings about unknown options (GH-50527)
+        if: always()
+        shell: bash
+        run: |
+          echo "Lines mentioning D9002 or an unknown option:"
+          grep -c -i -E 'D9002|ignoring unknown option' build.log || true
+          grep -i -E 'D9002|ignoring unknown option' build.log | sort | uniq -c | sort -rn | head -20 || true
+          echo "Distinct /arch flags passed:"
+          grep -o -E '[/-]arch:[A-Za-z0-9.]+' build.log | sort | uniq -c || true
+      - name: Installed CMake and pkg-config files (GH-49090)
+        if: always()
+        shell: bash
+        run: |
+          find /usr/lib /usr/share /usr/cmake /usr/bin -maxdepth 4 \
+            \( -iname '*arrow*config*.cmake' -o -iname '*parquet*config*.cmake' -o -iname 'arrow*.pc' -o -iname 'Find*Alt.cmake' \) \
+            2>/dev/null | sort || true
+      - name: Test
+        shell: cmd
+        env:
+          VCVARS_ARCH: x64
+          MSYS2_LOCATION: ${{ steps.setup-msys2.outputs.msys2-location }}
+        run: |
+          call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
+          rem For ORC
+          set TZDIR=%MSYS2_LOCATION%\usr\share\zoneinfo
+          bash -c "ci/scripts/cpp_test.sh $(pwd) $(pwd)/build 2>&1 | tee test.log; exit ${PIPESTATUS[0]}"
+      - name: The three un-skipped tests, on their own
+        if: always()
+        shell: cmd
+        env:
+          VCVARS_ARCH: x64
+          MSYS2_LOCATION: ${{ steps.setup-msys2.outputs.msys2-location }}
+        run: |
+          call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
+          set TZDIR=%MSYS2_LOCATION%\usr\share\zoneinfo
+          bash -c "export ARROW_TEST_DATA=$(pwd)/testing/data PARQUET_TEST_DATA=$(pwd)/cpp/submodules/parquet-testing/data; cd build/cpp && for t in arrow-substrait-substrait-test arrow-gtest-util-test; do exe=$(find . -name \"$t.exe\" | head -1); echo \"== $exe\"; \"$exe\" --gtest_filter='Substrait.ExecReadRelWithLocalFiles:Substrait.ReadRelWithGlobFiles:AssertTestWithinUlp.*' 2>&1 | tee -a ../../unskipped.log; done; true"
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-windows-msvc
+          path: |
+            build.log
+            test.log
+            unskipped.log

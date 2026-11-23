@@ -1,0 +1,100 @@
+# Batch D of the CI bug testing in a personal fork: macOS arm64 builds of
+# Arrow C++, based on the macOS job in apache/arrow's cpp.yml.
+#   benchmarks:   ARROW_BUILD_BENCHMARKS=ON with Gandiva (GH-48305), then
+#                 arrow-utility-test repeated 50 times (GH-50143)
+#   bundled-re2:  re2_SOURCE=BUNDLED with Gandiva while Homebrew's re2 is
+#                 installed (GH-37716)
+# Build failures in this workflow are results, not problems.
+# All of Arrow's own workflows are deleted on this branch so only these run.
+
+name: CI bug testing D (macOS)
+
+on:
+  push:
+    branches:
+      - 'ci-bug-testing/**'
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    name: macOS 26 arm64, ${{ matrix.config }}
+    # Never run in apache/arrow itself.
+    if: github.repository != 'apache/arrow'
+    runs-on: macos-26
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - config: benchmarks
+            benchmarks: "ON"
+            re2-source: ""
+          - config: bundled-re2
+            benchmarks: "OFF"
+            re2-source: "BUNDLED"
+    env:
+      ARROW_AZURE: OFF
+      ARROW_BUILD_BENCHMARKS: ${{ matrix.benchmarks }}
+      ARROW_BUILD_TESTS: ON
+      ARROW_DATASET: ON
+      ARROW_FLIGHT: ON
+      ARROW_GANDIVA: ON
+      ARROW_GCS: OFF
+      ARROW_HDFS: ON
+      ARROW_HOME: /tmp/local
+      ARROW_JEMALLOC: ON
+      ARROW_ORC: ON
+      ARROW_PARQUET: ON
+      ARROW_S3: OFF
+      ARROW_SUBSTRAIT: ON
+      ARROW_WITH_BROTLI: ON
+      ARROW_WITH_BZ2: ON
+      ARROW_WITH_LZ4: ON
+      ARROW_WITH_SNAPPY: ON
+      ARROW_WITH_ZLIB: ON
+      ARROW_WITH_ZSTD: ON
+      re2_SOURCE: ${{ matrix.re2-source }}
+    steps:
+      - name: Toolchain
+        run: |
+          sw_vers
+          clang --version
+      - name: Checkout Arrow
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          submodules: recursive
+      - name: Install Dependencies
+        run: |
+          brew bundle --file=cpp/Brewfile
+          echo "Homebrew re2:"
+          brew list --versions re2 || true
+      - name: Setup ccache
+        run: |
+          ci/scripts/ccache_setup.sh
+      - name: Build
+        run: |
+          set -o pipefail
+          ci/scripts/cpp_build.sh $(pwd) $(pwd)/build 2>&1 | tee build.log
+      - name: Which re2 was used
+        if: always()
+        run: |
+          grep -i -E 're2' build.log | grep -i -E 'source|found|bundled|building|version' | sort -u | head -20 || true
+      - name: arrow-utility-test, 50 times (GH-50143)
+        if: always() && matrix.config == 'benchmarks'
+        run: |
+          export ARROW_TEST_DATA=$(pwd)/testing/data
+          export PARQUET_TEST_DATA=$(pwd)/cpp/submodules/parquet-testing/data
+          ctest --test-dir build/cpp -R '^arrow-utility-test$' \
+            --repeat until-fail:50 --output-on-failure 2>&1 | tee utility-test.log
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-macos-${{ matrix.config }}
+          path: |
+            build.log
+            utility-test.log
