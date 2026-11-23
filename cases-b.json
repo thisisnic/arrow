@@ -20,7 +20,8 @@
     "emulator": "GCS testbench",
     "versions": ["16.1.0"],
     "reported_version_note": "pyarrow 16.1.0 and fsspec 2024.9.0 are from the reporter's requirements.txt",
-    "extra": ["fsspec==2024.9.0", "pandas"]
+    "note": "pandas pinned to the release current when reported: pandas 3 refused the fsspec wrapper before pyarrow was reached",
+    "extra": ["fsspec==2024.9.0", "pandas==2.2.3"]
   },
   {
     "issue": 31339,
@@ -29,7 +30,9 @@
     "versions": ["latest", "7.0.0"],
     "python_for": {"7.0.0": "3.10"},
     "reported_version_note": "reporter confirmed the same on 7.0.0",
-    "extra": ["gcsfs"]
+    "note": "gcsfs pinned: the current release probes the bucket type over gRPC with TLS, which the emulator cannot answer, and each probe waits 60 s",
+    "timeout": 300,
+    "extra": ["gcsfs==2024.6.1"]
   },
   {
     "issue": 44119,

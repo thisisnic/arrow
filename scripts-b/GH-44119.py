@@ -24,7 +24,7 @@ print("pyarrow", pa.__version__, "|", platform.platform())
 
 bucket = "ci-bug-44119-bucket"
 s3 = emu.s3fs()
-s3.create_dir(bucket)
+emu.s3_create_bucket(bucket)
 pq.write_table(pa.table({"a": [1, 2, 3]}), f"{bucket}/my-parquet", filesystem=s3)
 
 config = os.path.abspath("aws-config")

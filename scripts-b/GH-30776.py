@@ -24,7 +24,7 @@ print("pyarrow", pa.__version__, "|", platform.platform())
 
 bucket = "my-bucket-30776"
 s3 = emu.s3fs()
-s3.create_dir(bucket)
+emu.s3_create_bucket(bucket)
 
 cols_8 = ["a", "b", "c", "d", "e", "f", "g", "h"]
 table_8 = pa.table(

@@ -23,7 +23,7 @@ print("pyarrow", pa.__version__, "|", platform.platform())
 
 bucket = "bucket-41310"
 s3 = emu.s3fs()
-s3.create_dir(bucket)
+emu.s3_create_bucket(bucket)
 
 rng = np.random.default_rng(0)
 first = pa.table({"x": rng.standard_normal(400_000), "y": rng.integers(0, 1000, 400_000)})

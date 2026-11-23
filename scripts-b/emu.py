@@ -27,6 +27,18 @@ def s3fs():
     )
 
 
+def s3_create_bucket(name):
+    """Create a bucket on the local MinIO with the `mc` client.
+
+    pyarrow refuses to create buckets unless allow_bucket_creation is set, and
+    that option does not exist in old releases, so this does not go through
+    pyarrow. The workflow registers the `local` alias.
+    """
+    import subprocess
+    subprocess.run(["mc", "mb", "--ignore-existing", f"local/{name}"], check=True,
+                   stdout=subprocess.DEVNULL)
+
+
 def gcsfs_arrow():
     """A pyarrow GcsFileSystem pointed at the local storage testbench."""
     from pyarrow.fs import GcsFileSystem

@@ -24,7 +24,7 @@ print("pyarrow", pa.__version__, "| polars", pl.__version__, "|", platform.platf
 
 bucket = "bucket-36272"
 fs = emu.s3fs()
-fs.create_dir(bucket)
+emu.s3_create_bucket(bucket)
 for i in range(300):
     pq.write_table(pa.table({"area": [float(i), float(i) + 0.5], "id": [i, i]}),
                    f"{bucket}/data/part-{i:04d}.parquet", filesystem=fs)

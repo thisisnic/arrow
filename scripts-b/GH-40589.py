@@ -26,7 +26,7 @@ print("pyarrow", pa.__version__, "|", platform.platform())
 
 bucket = "a-bucket-40589"
 sfs = emu.s3fs()
-sfs.create_dir(bucket)
+emu.s3_create_bucket(bucket)
 sfs.create_dir(f"{bucket}/some_directory")
 sfs.create_dir(f"{bucket}/some_other_directory")
 
