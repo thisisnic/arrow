@@ -1,7 +1,8 @@
 name: CI bug testing A
 
 # Runs reporters' scripts for old apache/arrow bug reports against released
-# pyarrow wheels. Nothing here builds Arrow. Intended for a personal fork only.
+# pyarrow wheels and the released R package. Nothing here builds Arrow.
+# Intended for a personal fork only.
 
 on:
   push:
@@ -18,7 +19,7 @@ jobs:
     # Never run in apache/arrow itself.
     if: github.repository != 'apache/arrow'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +28,7 @@ jobs:
           - windows-2022
           - macos-26
           - macos-15-intel
+          - windows-11-arm
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -34,9 +36,25 @@ jobs:
           python-version: "3.12"
       - name: Install uv
         run: python -m pip install uv
+      # R is only needed on Windows and macOS (the R reports are about those),
+      # and not on the ARM Windows runner. If R setup fails, the Python
+      # scripts still run and the R cases are reported as skipped or failed.
+      - name: Set up R
+        if: runner.os != 'Linux' && matrix.os != 'windows-11-arm'
+        continue-on-error: true
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - name: Install R packages
+        if: runner.os != 'Linux' && matrix.os != 'windows-11-arm'
+        continue-on-error: true
+        timeout-minutes: 30
+        run: Rscript -e 'install.packages(c("arrow", "dplyr", "tibble"), repos = "https://cloud.r-project.org")'
       - name: Run scripts
         env:
           PYTHONUTF8: "1"
+          # R cases run only where the two R steps above ran.
+          R_CASES: ${{ (runner.os != 'Linux' && matrix.os != 'windows-11-arm') && '1' || '0' }}
         run: python driver.py --out out --label "${{ matrix.os }}"
       - name: Upload logs
         if: always()

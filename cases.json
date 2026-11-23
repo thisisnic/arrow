@@ -8,6 +8,13 @@
     "extra": ["pandas"]
   },
   {
+    "issue": 40170,
+    "name": "40170-probe",
+    "script": "scripts/GH-40170-probe.py",
+    "note": "follow-up, not the reporter's code: which %z inputs parse on each OS",
+    "versions": ["latest"]
+  },
+  {
     "issue": 47562,
     "script": "scripts/GH-47562.py",
     "reported_on": "Windows",
@@ -37,11 +44,73 @@
     "repeats": 5
   },
   {
+    "issue": 38804,
+    "name": "38804-R",
+    "lang": "R",
+    "script": "scripts/GH-38804.R",
+    "reported_on": "Windows",
+    "repeats": 3
+  },
+  {
     "issue": 38427,
     "script": "scripts/GH-38427.py",
     "reported_on": "macOS",
     "reported_version": "14.0.1",
     "reported_version_note": "stated by the commenter who posted the script (Python 3.11.6)",
-    "timeout": 300
+    "timeout": 120,
+    "repeats": 10
+  },
+  {
+    "issue": 40337,
+    "script": "scripts/GH-40337.py",
+    "reported_on": "Windows",
+    "reported_version": "15.0.0",
+    "reported_version_note": "assumed: latest release when reported on 2024-03-04",
+    "extra": ["python-dateutil"]
+  },
+  {
+    "issue": 38812,
+    "script": "scripts/GH-38812.py",
+    "reported_on": "Windows",
+    "reported_version": "14.0.1",
+    "reported_version_note": "assumed: latest release when reported on 2023-11-20"
+  },
+  {
+    "issue": 49413,
+    "script": "scripts/GH-49413.py",
+    "reported_on": "macOS arm64",
+    "versions": ["latest", "23.0.1", "15.0.1"],
+    "reported_version_note": "23.0.1 hangs and 15.0.1 works, per the issue title; reporter was on Python 3.11",
+    "timeout": 120
+  },
+  {
+    "issue": 39399,
+    "script": "scripts/GH-39399.py",
+    "reported_on": "macOS vs Ubuntu/Windows",
+    "versions": ["latest", "14.0.2", "16.1.0", "17.0.0"],
+    "reported_version_note": "14.0.2 assumed (latest when reported on 2023-12-30); 16.1.0 and 17.0.0 bracket #40392, which the earlier note says fixed it",
+    "extra": ["pandas"]
+  },
+  {
+    "issue": 40812,
+    "script": "scripts/GH-40812.py",
+    "reported_on": "Windows on ARM64",
+    "versions": ["latest"],
+    "note": "the issue is about building from source; this only checks whether a released wheel installs and works on the runner"
+  },
+  {
+    "issue": 44458,
+    "lang": "R",
+    "script": "scripts/GH-44458.R",
+    "reported_on": "Windows",
+    "only_on": ["Windows"],
+    "timeout": 1500
+  },
+  {
+    "issue": 33486,
+    "lang": "R",
+    "script": "scripts/GH-33486.R",
+    "reported_on": "Windows",
+    "note": "constructed: the issue has no reprex, only screenshots"
   }
 ]
