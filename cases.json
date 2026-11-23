@@ -1,0 +1,47 @@
+[
+  {
+    "issue": 40170,
+    "script": "scripts/GH-40170.py",
+    "reported_on": "Windows",
+    "reported_version": "15.0.0",
+    "reported_version_note": "assumed: reporter said 'latest pyarrow' on 2024-02-27",
+    "extra": ["pandas"]
+  },
+  {
+    "issue": 47562,
+    "script": "scripts/GH-47562.py",
+    "reported_on": "Windows",
+    "reported_version": "18.0.0",
+    "reported_version_note": "stated in the issue"
+  },
+  {
+    "issue": 34081,
+    "script": "scripts/GH-34081.py",
+    "reported_on": "macOS",
+    "reported_version": "11.0.0",
+    "reported_version_note": "stated in the issue"
+  },
+  {
+    "issue": 37757,
+    "script": "scripts/GH-37757.py",
+    "reported_on": "macOS",
+    "reported_version": "13.0.0",
+    "reported_version_note": "assumed: latest release when reported on 2023-09-17; reporter saw it on Python 3.11"
+  },
+  {
+    "issue": 38804,
+    "script": "scripts/GH-38804.py",
+    "reported_on": "Windows",
+    "reported_version": "14.0.0",
+    "reported_version_note": "stated in the issue",
+    "repeats": 5
+  },
+  {
+    "issue": 38427,
+    "script": "scripts/GH-38427.py",
+    "reported_on": "macOS",
+    "reported_version": "14.0.1",
+    "reported_version_note": "stated by the commenter who posted the script (Python 3.11.6)",
+    "timeout": 300
+  }
+]

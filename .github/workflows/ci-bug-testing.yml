@@ -1,0 +1,46 @@
+name: CI bug testing A
+
+# Runs reporters' scripts for old apache/arrow bug reports against released
+# pyarrow wheels. Nothing here builds Arrow. Intended for a personal fork only.
+
+on:
+  push:
+    branches:
+      - 'ci-bug-testing/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reprex:
+    name: ${{ matrix.os }}
+    # Never run in apache/arrow itself.
+    if: github.repository != 'apache/arrow'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-2022
+          - macos-26
+          - macos-15-intel
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install uv
+        run: python -m pip install uv
+      - name: Run scripts
+        env:
+          PYTHONUTF8: "1"
+        run: python driver.py --out out --label "${{ matrix.os }}"
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: results-${{ matrix.os }}
+          path: out/
