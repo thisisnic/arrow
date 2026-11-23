@@ -69,6 +69,31 @@
     "extra": ["python-dateutil"]
   },
   {
+    "issue": 40337,
+    "name": "40337-dateutil-2.9.0",
+    "script": "scripts/GH-40337.py",
+    "versions": ["latest", "15.0.0"],
+    "note": "python-dateutil pinned to the version named in the issue",
+    "extra": ["python-dateutil==2.9.0"]
+  },
+  {
+    "issue": 40337,
+    "name": "40337-dateutil-2.8.2",
+    "script": "scripts/GH-40337.py",
+    "versions": ["latest", "15.0.0"],
+    "note": "python-dateutil pinned to the release before the one named in the issue",
+    "extra": ["python-dateutil==2.8.2"]
+  },
+  {
+    "issue": 38812,
+    "name": "38812-repeat",
+    "script": "scripts/GH-38812-repeat.py",
+    "versions": ["latest", "14.0.1"],
+    "only_on": ["Windows"],
+    "timeout": 1200,
+    "note": "follow-up, not the reporter's code: many repeats to look for a rare lock. Windows only: other systems allow renaming an open file, so they cannot show it"
+  },
+  {
     "issue": 38812,
     "script": "scripts/GH-38812.py",
     "reported_on": "Windows",

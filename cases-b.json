@@ -1,0 +1,82 @@
+[
+  {
+    "issue": 38854,
+    "script": "scripts-b/GH-38854.py",
+    "emulator": "GCS testbench",
+    "versions": ["latest", "10.0.1"],
+    "reported_version_note": "issue says 10.0.x"
+  },
+  {
+    "issue": 44438,
+    "script": "scripts-b/GH-44438.py",
+    "emulator": "GCS testbench",
+    "versions": ["latest"],
+    "extra": ["fsspec", "pandas"]
+  },
+  {
+    "issue": 44438,
+    "name": "44438-reported",
+    "script": "scripts-b/GH-44438.py",
+    "emulator": "GCS testbench",
+    "versions": ["16.1.0"],
+    "reported_version_note": "pyarrow 16.1.0 and fsspec 2024.9.0 are from the reporter's requirements.txt",
+    "extra": ["fsspec==2024.9.0", "pandas"]
+  },
+  {
+    "issue": 31339,
+    "script": "scripts-b/GH-31339.py",
+    "emulator": "GCS testbench",
+    "versions": ["latest", "7.0.0"],
+    "python_for": {"7.0.0": "3.10"},
+    "reported_version_note": "reporter confirmed the same on 7.0.0",
+    "extra": ["gcsfs"]
+  },
+  {
+    "issue": 44119,
+    "script": "scripts-b/GH-44119.py",
+    "emulator": "MinIO",
+    "versions": ["latest", "17.0.0"],
+    "reported_version_note": "stated in the issue",
+    "timeout": 420
+  },
+  {
+    "issue": 30776,
+    "script": "scripts-b/GH-30776.py",
+    "emulator": "MinIO",
+    "versions": ["latest", "8.0.0", "7.0.0"],
+    "python_for": {"7.0.0": "3.10", "8.0.0": "3.10"},
+    "reported_version_note": "filed against a pre-8.0.0 build; the earlier note says the fix is in 8.0.0 and not in 7.0.0",
+    "timeout": 300
+  },
+  {
+    "issue": 40589,
+    "script": "scripts-b/GH-40589.py",
+    "emulator": "MinIO",
+    "versions": ["latest", "15.0.1"],
+    "reported_version_note": "assumed: latest release when reported on 2024-03-16"
+  },
+  {
+    "issue": 41310,
+    "script": "scripts-b/GH-41310.py",
+    "emulator": "MinIO",
+    "versions": ["latest", "15.0.2"],
+    "reported_version_note": "assumed: latest release when reported on 2024-04-19",
+    "note": "constructed: the issue has no script"
+  },
+  {
+    "issue": 36272,
+    "script": "scripts-b/GH-36272.py",
+    "emulator": "MinIO",
+    "versions": ["latest"],
+    "extra": ["polars"]
+  },
+  {
+    "issue": 36272,
+    "name": "36272-reported",
+    "script": "scripts-b/GH-36272.py",
+    "emulator": "MinIO",
+    "versions": ["12.0.1"],
+    "reported_version_note": "assumed: pyarrow 12.0.1 and polars 0.18.x were current when reported on 2023-06-23",
+    "extra": ["polars==0.18.4"]
+  }
+]

@@ -110,6 +110,9 @@ def run_once(case, version, run_number, out_dir):
     script = HERE / case["script"]
     name = case.get("name", str(case["issue"]))
     python = LATEST_PYTHON if version == "latest" else REPORTED_PYTHON
+    # Very old releases have no wheels for Python 3.11; a case can name the
+    # Python to use for a given pyarrow version.
+    python = case.get("python_for", {}).get(version, python)
     uv_run = [
         sys.executable, "-m", "uv", "run", "--no-project", "--quiet",
         # Wheels only: never try to build pyarrow from its sdist.
@@ -152,6 +155,7 @@ def main():
     parser.add_argument("--out", default="out")
     parser.add_argument("--label", default=platform.system())
     parser.add_argument("--only", type=int, action="append", help="issue number(s) to run")
+    parser.add_argument("--cases", default="cases.json", help="cases file, relative to this script")
     args = parser.parse_args()
 
     out_dir = Path(args.out).resolve()
@@ -166,7 +170,7 @@ def main():
     ]
     print("\n".join(env_lines), flush=True)
 
-    cases = json.loads((HERE / "cases.json").read_text())
+    cases = json.loads((HERE / args.cases).read_text())
     rows = []
 
     def write_summary():
@@ -189,12 +193,18 @@ def main():
     # The workflow sets R_CASES=1 only on runners where it installed R and arrow.
     r_enabled = os.environ.get("R_CASES") == "1" or not os.environ.get("GITHUB_ACTIONS")
 
+    # ONLY_CASES is a comma-separated list of case names (the "name" field, or
+    # the issue number when a case has no name). Empty means run everything.
+    only_names = {n.strip() for n in os.environ.get("ONLY_CASES", "").split(",") if n.strip()}
+
     for case in cases:
         if args.only and case["issue"] not in args.only:
             continue
         if "only_on" in case and platform.system() not in case["only_on"]:
             continue
         name = case.get("name", str(case["issue"]))
+        if only_names and name not in only_names:
+            continue
         repeats = range(1, case.get("repeats", 1) + 1)
         if case.get("lang") == "R":
             if not r_enabled:

@@ -18,6 +18,7 @@ try:
     print("UTC ->", repr(pa.lib.tzinfo_to_string(tz)))
     tz = dateutil.tz.gettz('Europe/Paris')
     print("dateutil tz object:", repr(tz))
+    print("dateutil tz _filename:", repr(getattr(tz, "_filename", None)))
     got = pa.lib.tzinfo_to_string(tz)
     print("Europe/Paris ->", repr(got))
     print(f"RESULT: tzinfo_to_string(gettz('Europe/Paris')) = {got!r} (expected 'Europe/Paris'); tz repr {tz!r}")
