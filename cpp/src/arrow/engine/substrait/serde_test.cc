@@ -4451,8 +4451,12 @@ TEST(Substrait, ReadRelWithGlobFiles) {
   std::string sample_tempdir_path = tempdirs[0]->path().ToString();
   std::string base_tempdir_path =
       sample_tempdir_path.substr(0, sample_tempdir_path.find(path_prefix));
+  // CI bug testing experiment for GH-33861: a Windows path such as "C:/Users/..."
+  // needs a third slash, otherwise "C:" is parsed as the URI host.
+  const std::string uri_prefix =
+      (!base_tempdir_path.empty() && base_tempdir_path[0] == '/') ? "file://" : "file:///";
   std::string glob_like_path =
-      "file://" + base_tempdir_path + path_prefix + "*/serde_test_*.arrow";
+      uri_prefix + base_tempdir_path + path_prefix + "*/serde_test_*.arrow";
 
   for (const auto& file_name : file_names) {
     ASSERT_OK_AND_ASSIGN(auto file_path, tempdirs[idx]->path().Join(file_name));

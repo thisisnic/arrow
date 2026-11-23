@@ -135,6 +135,19 @@ jobs:
           call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
           set TZDIR=%MSYS2_LOCATION%\usr\share\zoneinfo
           bash -c "export ARROW_TEST_DATA=$(pwd)/testing/data PARQUET_TEST_DATA=$(pwd)/cpp/submodules/parquet-testing/data; cd build/cpp && for t in arrow-substrait-substrait-test arrow-gtest-util-test; do exe=$(find . -name \"$t.exe\" | head -1); echo \"== $exe\"; \"$exe\" --gtest_filter='Substrait.ExecReadRelWithLocalFiles:Substrait.ReadRelWithGlobFiles:AssertTestWithinUlp.*' 2>&1 | tee -a ../../unskipped.log; done; true"
+      - name: GH-47490 test with a backslash PARQUET_TEST_DATA
+        # The original failure was on AppVeyor, where the variable was a
+        # native Windows path. The steps above pass it with forward slashes.
+        if: always()
+        shell: cmd
+        env:
+          VCVARS_ARCH: x64
+        run: |
+          call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
+          set ARROW_TEST_DATA=%CD%\testing\data
+          set PARQUET_TEST_DATA=%CD%\cpp\submodules\parquet-testing\data
+          echo PARQUET_TEST_DATA=%PARQUET_TEST_DATA%
+          bash -c "cd build/cpp && exe=$(find . -name arrow-substrait-substrait-test.exe | head -1); echo \"== $exe\"; \"$exe\" --gtest_filter=Substrait.ExecReadRelWithLocalFiles 2>&1 | tee -a ../../unskipped-backslash.log; true"
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v7
@@ -144,3 +157,4 @@ jobs:
             build.log
             test.log
             unskipped.log
+            unskipped-backslash.log
