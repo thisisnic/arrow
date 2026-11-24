@@ -1,12 +1,12 @@
-# Batch C of the CI bug testing in a personal fork: one Windows MSVC build of
-# Arrow C++, based on apache/arrow's cpp_windows.yml, with three Windows-only
-# test skips removed on this branch so the tests actually run:
-#   GH-47490  Substrait.ExecReadRelWithLocalFiles
-#   GH-33861  Substrait.ReadRelWithGlobFiles
-#   GH-47442  AssertTestWithinUlp.Basics
-# The build uses ARROW_SIMD_LEVEL=SSE4_2 so the compiler flag from GH-50527
-# is passed. Test failures in this job are the result, not a problem.
-# All of Arrow's own workflows are deleted on this branch so only this runs.
+# Batch C of the CI bug testing in a personal fork: Windows MSVC builds of
+# Arrow C++, based on apache/arrow's cpp_windows.yml. Round three: three
+# configurations, one per issue, that the default build does not cover.
+#   x86-32bit   GH-32111  does a 32-bit MSVC build work?
+#   asan        GH-50244  arrow-utility-test under MSVC AddressSanitizer
+#   examples    GH-47598  Parquet encryption examples (need <dirent.h>),
+#               GH-45154  Arrow headers after <windows.h> without NOMINMAX
+# Build and test failures in this workflow are results, not problems.
+# All of Arrow's own workflows are deleted on this branch so only these run.
 
 name: CI bug testing C (Windows MSVC)
 
@@ -20,29 +20,55 @@ permissions:
 
 jobs:
   windows:
-    name: Windows 2022 MSVC, skips removed
+    name: Windows 2022 MSVC, ${{ matrix.config }}
     # Never run in apache/arrow itself.
     if: github.repository != 'apache/arrow'
     runs-on: windows-2022
-    timeout-minutes: 180
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - config: x86-32bit
+            vcvars: x86
+            asan: "OFF"
+            examples: "OFF"
+            encryption: "OFF"
+            tests: "ON"
+            extras: "OFF"
+          - config: asan
+            vcvars: x64
+            asan: "ON"
+            examples: "OFF"
+            encryption: "OFF"
+            tests: "ON"
+            extras: "OFF"
+          - config: examples
+            vcvars: x64
+            asan: "OFF"
+            examples: "ON"
+            encryption: "ON"
+            tests: "OFF"
+            extras: "OFF"
     env:
-      ARROW_AZURE: ON
+      ARROW_AZURE: ${{ matrix.extras }}
       ARROW_BOOST_USE_SHARED: OFF
       ARROW_BUILD_BENCHMARKS: OFF
+      ARROW_BUILD_EXAMPLES: ${{ matrix.examples }}
       ARROW_BUILD_SHARED: ON
       ARROW_BUILD_STATIC: ON
-      ARROW_BUILD_TESTS: ON
+      ARROW_BUILD_TESTS: ${{ matrix.tests }}
       ARROW_DATASET: ON
       ARROW_FILESYSTEM: ON
       ARROW_FLIGHT: OFF
-      ARROW_HDFS: ON
+      ARROW_HDFS: ${{ matrix.extras }}
       ARROW_HOME: /usr
       ARROW_JEMALLOC: OFF
       ARROW_MIMALLOC: ON
-      ARROW_ORC: ON
+      ARROW_ORC: ${{ matrix.extras }}
       ARROW_PARQUET: ON
-      ARROW_SIMD_LEVEL: SSE4_2
-      ARROW_SUBSTRAIT: ON
+      ARROW_SUBSTRAIT: ${{ matrix.extras }}
+      ARROW_USE_ASAN: ${{ matrix.asan }}
       ARROW_USE_GLOG: OFF
       ARROW_VERBOSE_THIRDPARTY_BUILD: OFF
       ARROW_WITH_BROTLI: OFF
@@ -58,6 +84,8 @@ jobs:
       CMAKE_INSTALL_PREFIX: /usr
       CMAKE_MSVC_DEBUG_INFORMATION_FORMAT: Embedded
       CMAKE_UNITY_BUILD: ON
+      PARQUET_REQUIRE_ENCRYPTION: ${{ matrix.encryption }}
+      VCVARS_ARCH: ${{ matrix.vcvars }}
     steps:
       - name: Disable Crash Dialogs
         run: |
@@ -94,67 +122,65 @@ jobs:
           "VS_INSTALL_PATH=$(vswhere -latest -property installationPath)" >> $env:GITHUB_ENV
       - name: Build
         shell: cmd
-        env:
-          VCVARS_ARCH: x64
         run: |
           call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
+          cl 2>&1 | findstr /C:"Version"
           bash -c "ci/scripts/cpp_build.sh $(pwd) $(pwd)/build 2>&1 | tee build.log; exit ${PIPESTATUS[0]}"
-      - name: Compiler warnings about unknown options (GH-50527)
-        if: always()
-        shell: bash
-        run: |
-          echo "Lines mentioning D9002 or an unknown option:"
-          grep -c -i -E 'D9002|ignoring unknown option' build.log || true
-          grep -i -E 'D9002|ignoring unknown option' build.log | sort | uniq -c | sort -rn | head -20 || true
-          echo "Distinct /arch flags passed:"
-          grep -o -E '[/-]arch:[A-Za-z0-9.]+' build.log | sort | uniq -c || true
-      - name: Installed CMake and pkg-config files (GH-49090)
-        if: always()
-        shell: bash
-        run: |
-          find /usr/lib /usr/share /usr/cmake /usr/bin -maxdepth 4 \
-            \( -iname '*arrow*config*.cmake' -o -iname '*parquet*config*.cmake' -o -iname 'arrow*.pc' -o -iname 'Find*Alt.cmake' \) \
-            2>/dev/null | sort || true
-      - name: Test
+      - name: Build again without stopping at the first error
+        # Shows every compile error, not only the first one.
+        if: failure()
         shell: cmd
-        env:
-          VCVARS_ARCH: x64
-          MSYS2_LOCATION: ${{ steps.setup-msys2.outputs.msys2-location }}
         run: |
           call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
-          rem For ORC
-          set TZDIR=%MSYS2_LOCATION%\usr\share\zoneinfo
-          bash -c "ci/scripts/cpp_test.sh $(pwd) $(pwd)/build 2>&1 | tee test.log; exit ${PIPESTATUS[0]}"
-      - name: The three un-skipped tests, on their own
+          bash -c "if [ -f build/cpp/build.ninja ]; then ninja -C build/cpp -k 0 2>&1 | tee build-keep-going.log; else echo 'configure did not finish; no build.ninja' | tee build-keep-going.log; fi; true"
+          bash -c "echo 'Distinct errors:'; grep -E 'error [A-Z]+[0-9]+|fatal error' build-keep-going.log | sed -E 's/^.*((fatal )?error [A-Z]+[0-9]+.*)$/\1/' | sort | uniq -c | sort -rn | head -40; echo 'Targets that failed:'; grep -E '^FAILED:' build-keep-going.log | sort -u | head -40; true"
+      - name: Warnings worth knowing about
         if: always()
+        shell: bash
+        run: |
+          echo "D9002 / unknown option lines (GH-50527): $(grep -c -i -E 'D9002|ignoring unknown option' build.log || true)"
+          grep -i -E 'D9002|ignoring unknown option' build.log | sort | uniq -c | sort -rn | head -5 || true
+          echo "Distinct /arch flags:"; grep -o -E '[/-]arch:[A-Za-z0-9.]+' build.log | sort | uniq -c || true
+          echo "Version-script probe (GH-50449):"; grep -i 'VERSION_SCRIPT' build.log | sort -u || true
+      - name: arrow-utility-test (GH-50244 under ASAN; also run for x86)
+        if: always() && matrix.tests == 'ON'
         shell: cmd
         env:
-          VCVARS_ARCH: x64
           MSYS2_LOCATION: ${{ steps.setup-msys2.outputs.msys2-location }}
         run: |
           call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
           set TZDIR=%MSYS2_LOCATION%\usr\share\zoneinfo
-          bash -c "export ARROW_TEST_DATA=$(pwd)/testing/data PARQUET_TEST_DATA=$(pwd)/cpp/submodules/parquet-testing/data; cd build/cpp && for t in arrow-substrait-substrait-test arrow-gtest-util-test; do exe=$(find . -name \"$t.exe\" | head -1); echo \"== $exe\"; \"$exe\" --gtest_filter='Substrait.ExecReadRelWithLocalFiles:Substrait.ReadRelWithGlobFiles:AssertTestWithinUlp.*' 2>&1 | tee -a ../../unskipped.log; done; true"
-      - name: GH-47490 test with a backslash PARQUET_TEST_DATA
-        # The original failure was on AppVeyor, where the variable was a
-        # native Windows path. The steps above pass it with forward slashes.
-        if: always()
+          bash -c "export ARROW_TEST_DATA=$(pwd)/testing/data PARQUET_TEST_DATA=$(pwd)/cpp/submodules/parquet-testing/data; cd build/cpp 2>/dev/null && ctest -R '^arrow-utility-test$' --output-on-failure 2>&1 | tee ../../utility-test.log; true"
+      - name: Full test run (x86 only)
+        if: always() && matrix.config == 'x86-32bit'
         shell: cmd
         env:
-          VCVARS_ARCH: x64
+          MSYS2_LOCATION: ${{ steps.setup-msys2.outputs.msys2-location }}
         run: |
           call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
-          set ARROW_TEST_DATA=%CD%\testing\data
-          set PARQUET_TEST_DATA=%CD%\cpp\submodules\parquet-testing\data
-          echo PARQUET_TEST_DATA=%PARQUET_TEST_DATA%
-          bash -c "cd build/cpp && exe=$(find . -name arrow-substrait-substrait-test.exe | head -1); echo \"== $exe\"; \"$exe\" --gtest_filter=Substrait.ExecReadRelWithLocalFiles 2>&1 | tee -a ../../unskipped-backslash.log; true"
+          set TZDIR=%MSYS2_LOCATION%\usr\share\zoneinfo
+          bash -c "ci/scripts/cpp_test.sh $(pwd) $(pwd)/build 2>&1 | tee test.log; true"
+      - name: Arrow headers after windows.h without NOMINMAX (GH-45154)
+        if: always() && matrix.config == 'examples'
+        shell: cmd
+        run: |
+          call "%VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_ARCH% || exit /b 1
+          echo #include ^<windows.h^> > nominmax.cpp
+          echo #include ^<arrow/api.h^> >> nominmax.cpp
+          echo int main() { return 0; } >> nominmax.cpp
+          type nominmax.cpp
+          cl /nologo /c /EHsc /std:c++20 /I cpp\src /I build\cpp\src nominmax.cpp > nominmax.log 2>&1
+          echo cl exit code %ERRORLEVEL% >> nominmax.log
+          bash -c "echo 'First lines:'; head -30 nominmax.log; echo; echo 'Distinct errors:'; grep -o -E 'error C[0-9]+' nominmax.log | sort | uniq -c; echo 'Headers with errors:'; grep -E 'error C[0-9]+' nominmax.log | sed -E 's/\([0-9,]+\).*//' | sort | uniq -c | sort -rn | head -20; tail -1 nominmax.log; true"
+          exit /b 0
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: results-windows-msvc
+          name: results-windows-msvc-${{ matrix.config }}
           path: |
             build.log
+            build-keep-going.log
+            utility-test.log
             test.log
-            unskipped.log
-            unskipped-backslash.log
+            nominmax.log

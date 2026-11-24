@@ -19,27 +19,31 @@ permissions:
 
 jobs:
   macos:
-    name: macOS 15 arm64, ${{ matrix.config }}
+    name: ${{ matrix.runner }}, ${{ matrix.config }}
     # Never run in apache/arrow itself.
     if: github.repository != 'apache/arrow'
-    # macos-26 jobs sat in the queue for 15 minutes and were cancelled without
-    # ever getting a runner, three times in a row, so this uses macos-15
-    # (also arm64).
-    runs-on: macos-15
+    # Apple Silicon jobs (macos-15, macos-26) sat in the queue for 15 minutes
+    # and were cancelled without a runner on 2026-11-23, while Intel jobs
+    # started at once. The two builds therefore run on Intel; one Apple
+    # Silicon job is kept for GH-50143, which is specific to arm64.
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 150
     strategy:
       fail-fast: false
-      # One at a time: when both were queued together, the second never got a
-      # runner and was cancelled after 15 minutes.
-      max-parallel: 1
       matrix:
         include:
           - config: benchmarks
+            runner: macos-15-intel
             benchmarks: "ON"
             re2-source: ""
           - config: bundled-re2
+            runner: macos-15-intel
             benchmarks: "OFF"
             re2-source: "BUNDLED"
+          - config: benchmarks
+            runner: macos-15
+            benchmarks: "ON"
+            re2-source: ""
     env:
       ARROW_AZURE: OFF
       ARROW_BUILD_BENCHMARKS: ${{ matrix.benchmarks }}
@@ -111,7 +115,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: results-macos-${{ matrix.config }}
+          name: results-${{ matrix.runner }}-${{ matrix.config }}
           path: |
             build.log
             build-keep-going.log
