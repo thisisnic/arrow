@@ -32,18 +32,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - config: benchmarks
-            runner: macos-15-intel
-            benchmarks: "ON"
-            re2-source: ""
+          # Round two. The Intel benchmarks build answered GH-48305 and is not
+          # repeated. On Intel, Homebrew headers live in /usr/local/include
+          # and trip -Werror (apache/arrow's own Intel job sets
+          # BUILD_WARNING_LEVEL=PRODUCTION for that reason), which is what
+          # stopped the first bundled-re2 build, so it is set here too.
           - config: bundled-re2
             runner: macos-15-intel
             benchmarks: "OFF"
             re2-source: "BUNDLED"
+            warning-level: PRODUCTION
           - config: benchmarks
             runner: macos-15
             benchmarks: "ON"
             re2-source: ""
+            warning-level: CHECKIN
     env:
       ARROW_AZURE: OFF
       ARROW_BUILD_BENCHMARKS: ${{ matrix.benchmarks }}
@@ -65,6 +68,7 @@ jobs:
       ARROW_WITH_SNAPPY: ON
       ARROW_WITH_ZLIB: ON
       ARROW_WITH_ZSTD: ON
+      BUILD_WARNING_LEVEL: ${{ matrix.warning-level }}
       re2_SOURCE: ${{ matrix.re2-source }}
     steps:
       - name: Toolchain

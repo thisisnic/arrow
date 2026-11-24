@@ -29,23 +29,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Round four. The first x86 build stopped on 3,319 C4244 warnings
+          # treated as errors, so this one lets warnings through to see what
+          # else fails. ARROW_USE_ASAN is refused for MSVC by
+          # san-config.cmake, so ASAN is passed as a compiler flag, in a
+          # release build because /fsanitize=address cannot be combined with
+          # the debug run-time checks. The Parquet examples need
+          # PARQUET_BUILD_EXAMPLES, which the script leaves off by default.
           - config: x86-32bit
             vcvars: x86
-            asan: "OFF"
+            cxxflags: ""
+            build-type: debug
+            warning-level: PRODUCTION
             examples: "OFF"
             encryption: "OFF"
             tests: "ON"
             extras: "OFF"
           - config: asan
             vcvars: x64
-            asan: "ON"
+            cxxflags: "/fsanitize=address"
+            build-type: release
+            warning-level: PRODUCTION
             examples: "OFF"
             encryption: "OFF"
             tests: "ON"
             extras: "OFF"
           - config: examples
             vcvars: x64
-            asan: "OFF"
+            cxxflags: ""
+            build-type: debug
+            warning-level: CHECKIN
             examples: "ON"
             encryption: "ON"
             tests: "OFF"
@@ -68,7 +81,11 @@ jobs:
       ARROW_ORC: ${{ matrix.extras }}
       ARROW_PARQUET: ON
       ARROW_SUBSTRAIT: ${{ matrix.extras }}
-      ARROW_USE_ASAN: ${{ matrix.asan }}
+      ARROW_BUILD_TYPE: ${{ matrix.build-type }}
+      BUILD_WARNING_LEVEL: ${{ matrix.warning-level }}
+      CFLAGS: ${{ matrix.cxxflags }}
+      CXXFLAGS: ${{ matrix.cxxflags }}
+      PARQUET_BUILD_EXAMPLES: ${{ matrix.examples }}
       ARROW_USE_GLOG: OFF
       ARROW_VERBOSE_THIRDPARTY_BUILD: OFF
       ARROW_WITH_BROTLI: OFF
