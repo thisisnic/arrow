@@ -17,9 +17,9 @@ env:
   # Comma-separated case names for the `reprex` job (see cases.json). Empty
   # runs everything. Currently narrowed to the batch A follow-ups; set it
   # back to "" to re-run the whole of batch A.
-  ONLY_CASES: "38812-repeat"
+  ONLY_CASES: "33486-concurrent"
   # Set to "1" to install R and run the R cases.
-  RUN_R: "0"
+  RUN_R: "1"
 
 jobs:
   # Batch B: S3 and GCS issues against local emulators (MinIO and Google's

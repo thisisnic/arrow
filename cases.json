@@ -96,6 +96,16 @@
   },
   {
     "issue": 38812,
+    "name": "38812-diagnose",
+    "script": "scripts/GH-38812-diagnose.py",
+    "versions": ["14.0.1", "16.1.0", "18.1.0", "19.0.1", "22.0.0", "23.0.1", "latest"],
+    "extra": ["psutil"],
+    "repeats": 2,
+    "timeout": 1500,
+    "note": "follow-up, not the reporter's code: each condition in its own child process; rename check after every failing read, psutil handle counts. Runs on every OS: Linux and macOS cannot show a refused rename but do show leaked handles and hangs"
+  },
+  {
+    "issue": 38812,
     "script": "scripts/GH-38812.py",
     "reported_on": "Windows",
     "reported_version": "14.0.1",
@@ -138,5 +148,15 @@
     "script": "scripts/GH-33486.R",
     "reported_on": "Windows",
     "note": "constructed: the issue has no reprex, only screenshots"
+  },
+  {
+    "issue": 33486,
+    "name": "33486-concurrent",
+    "lang": "R",
+    "script": "scripts/GH-33486-concurrent.R",
+    "reported_on": "Windows",
+    "repeats": 3,
+    "timeout": 1500,
+    "note": "constructed: renames in a second process while open_dataset() runs, plus the reprexes from the tickets linked on the thread (#31796, #32315)"
   }
 ]
